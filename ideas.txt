@@ -1,0 +1,7 @@
+- MCTS may be too slow, tradeoff speed for next best Agent?
+
+- how to vary drawScore?
+    - could be easier in our own Java implementation...
+    - Cp/Cp_default parameters (default Cp = Cp_default = 1.0) - these can also be tuned
+        - see eg https://towardsdatascience.com/the-upper-confidence-bound-ucb-bandit-algorithm-c05c2bf4c13f
+        - optimum Cp = 0.6 here
