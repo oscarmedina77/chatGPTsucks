@@ -1,4 +1,6 @@
 package com.thg.accelerator23.connectn.ai.chatgptsucks;
+import java.util.Random;
+import java.util.random.*;
 
 import com.thehutgroup.accelerator.connectn.player.Board;
 import com.thehutgroup.accelerator.connectn.player.Counter;
@@ -13,8 +15,10 @@ public class ConnectFork extends Player {
 
   @Override
   public int makeMove(Board board) {
-    //TODO: some crazy analysis
-    //TODO: make sure said analysis uses less than 2G of heap and returns within 10 seconds on whichever machine is running it
-    return 4;
+    int move;
+    int width = 10;
+    Random rand = new Random();
+    move = rand.nextInt(width);
+    return move;
   }
 }
