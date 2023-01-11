@@ -1,9 +1,6 @@
 package com.thg.accelerator23.connectn.ai.chatgptsucks.analysis;
 
-import com.thehutgroup.accelerator.connectn.player.Board;
-import com.thehutgroup.accelerator.connectn.player.Counter;
-import com.thehutgroup.accelerator.connectn.player.GameConfig;
-import com.thehutgroup.accelerator.connectn.player.Position;
+import com.thehutgroup.accelerator.connectn.player.*;
 import com.thg.accelerator23.connectn.ai.chatgptsucks.model.Line;
 
 import java.util.ArrayList;
@@ -110,5 +107,33 @@ public class BoardAnalyser {
             bestRunByColour.put(current, Math.max(currentRunLength, 1));
         }
         return bestRunByColour;
+    }
+
+    public boolean winningPositionAvailable (Counter counter, Board board) {
+        for (int i = 0; i< board.getConfig().getWidth(); i ++){
+            try {
+                Board newBoard = new Board(board, i, counter);
+                if (calculateGameState(newBoard).isWin()) {
+                    return true;
+                }
+            } catch (InvalidMoveException e) {}
+        }
+        return false;
+    }
+
+    public int winningPosition (Counter counter, Board board) {
+        for (int i = 0; i< board.getConfig().getWidth(); i ++){
+            try {
+                Board newBoard = new Board(board, i, counter);
+                if (calculateGameState(newBoard).isWin()) {
+                    return i;
+                }
+            } catch (InvalidMoveException e) {}
+        }
+        return -1;
+    }
+
+    public boolean validPosition(Board board, Position position) {
+        return !board.hasCounterAtPosition(position) && board.isWithinBoard(position);
     }
 }
