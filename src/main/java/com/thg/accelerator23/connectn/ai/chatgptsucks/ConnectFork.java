@@ -23,13 +23,22 @@ public class ConnectFork extends Player {
     BoardAnalyser boardAnalyser = new BoardAnalyser(board.getConfig());
     List<Integer> availableMoves =  new ArrayList<>();
 
-    for (int i = 0; i< board.getConfig().getWidth(); i ++){
-      try {
-        new Board(board, i, this.getCounter());
-        availableMoves.add(i);
-      } catch (InvalidMoveException e) {
+    if (boardAnalyser.winningPositionAvailable(this.getCounter(), board)) {
+      return boardAnalyser.winningPosition(this.getCounter(), board);
+    } else if (boardAnalyser.winningPositionAvailable(this.getCounter().getOther(), board)) {
+      return boardAnalyser.winningPosition(this.getCounter().getOther(), board);
+    } else {
+      for (int i = 0; i< board.getConfig().getWidth(); i ++){
+        try {
+          new Board(board, i, this.getCounter());
+          availableMoves.add(i);
+        } catch (InvalidMoveException e) {
+        }
       }
+      return availableMoves.get(new Random().nextInt(availableMoves.size()));
     }
-    return availableMoves.get(new Random().nextInt(availableMoves.size()));
+    }
   }
-}
+
+
+
