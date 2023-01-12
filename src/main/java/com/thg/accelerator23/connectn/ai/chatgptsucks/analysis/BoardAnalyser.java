@@ -82,6 +82,8 @@ public class BoardAnalyser {
         return lines;
     }
 
+
+
     private Map<Counter, Integer> getBestRunByColour(Line line) {
         HashMap<Counter, Integer> bestRunByColour = new HashMap<>();
         for (Counter c : Counter.values()) {
@@ -133,7 +135,19 @@ public class BoardAnalyser {
         return -1;
     }
 
-    public boolean validPosition(Board board, Position position) {
+    private boolean validPosition(Board board, Position position) {
         return !board.hasCounterAtPosition(position) && board.isWithinBoard(position);
     }
+
+    public ArrayList<Integer> validPositions (Board board, Position position) {
+        ArrayList<Integer> positionList = new ArrayList<>();
+        for (int i = 0; i< board.getConfig().getWidth(); i ++){
+            if (validPosition(board, position)) {
+                positionList.add(i);
+            }
+        }
+        return positionList;
+    }
+
+
 }

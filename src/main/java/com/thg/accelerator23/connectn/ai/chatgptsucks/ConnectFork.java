@@ -1,15 +1,14 @@
 package com.thg.accelerator23.connectn.ai.chatgptsucks;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListResourceBundle;
-import java.util.Random;
-import java.util.random.*;
 
 import com.thehutgroup.accelerator.connectn.player.Board;
 import com.thehutgroup.accelerator.connectn.player.Counter;
 import com.thehutgroup.accelerator.connectn.player.InvalidMoveException;
 import com.thehutgroup.accelerator.connectn.player.Player;
 import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.BoardAnalyser;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 
 public class ConnectFork extends Player {
