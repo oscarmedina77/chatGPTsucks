@@ -1,39 +1,133 @@
 package com.thg.accelerator23.connectn.ai.chatgptsucks;
 
-import com.thehutgroup.accelerator.connectn.player.Board;
-import com.thehutgroup.accelerator.connectn.player.Counter;
-import com.thehutgroup.accelerator.connectn.player.Player;
+import com.thehutgroup.accelerator.connectn.player.*;
 import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.BoardAnalyser;
+import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.GameState;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class ConnectForkMCTSv0 extends Player {
   private static Board board;
 
 //  Observation???
-//  global current_state?
+//  global currentState?
 
   public ConnectForkMCTSv0(Counter counter) {
     //TODO: fill in your name here
     super(counter, ConnectForkMCTSv0.class.getName());
   }
 
+  public double[] checkFinishAndScore(Counter winner, int column, int mark, GameConfig config) {
+    GameState gameState = new GameState(winner);
+    if (gameState.isWin()) {
+      return new double[]{1, 1};
+    }
+    if (gameState.isDraw()) {
+      return new double[]{1, 0.5};
+    }
+    else {
+      return new double[]{0, 0.5};
+    }
+  }
+
+  public Double uctScore(double nodeTotalScore, int nodeTotalVisits, int parentTotalVisits, double Cp) {
+    if (nodeTotalVisits == 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+    return nodeTotalScore / nodeTotalVisits + Cp + Math.sqrt(2*Math.log(parentTotalVisits / nodeTotalVisits));
+  }
+
+  public int opponentMark(int mark) {
+    return 3 - mark;
+  }
+
+  public double opponentScore(double score) {
+    return 1 - score;
+  }
+
+  public int randomAction(Board board, GameConfig config) {
+    BoardAnalyser boardAnalyser = new BoardAnalyser(board.getConfig());
+    List<Integer> availableMoves =  new ArrayList<>();
+
+    for (int i = 0; i< board.getConfig().getWidth(); i ++){
+      try {
+        new Board(board, i, this.getCounter());
+        availableMoves.add(i);
+      } catch (InvalidMoveException e) {
+      }
+    }
+    return availableMoves.get(new Random().nextInt(availableMoves.size()));
+  }
+
+  public double defaultPolicySimulation(Board board, int mark, GameConfig config, GameState gameState, Counter winner) {
+    double originalMark = mark;
+    int column = randomAction(board, config);
+
+    double[] finishScore = checkFinishAndScore(winner, column, mark, config);
+
+//    this may get stuck, make new function?
+    makeMove(board);
+    System.out.println("are we stuck lmao");
+
+    while (!gameState.isEnd()) {
+      mark = opponentMark(mark);
+      column = randomAction(board, config);
+      makeMove(board);
+      finishScore = checkFinishAndScore(winner, column, mark, config);
+    }
+
+    if (mark == originalMark) {
+      return finishScore[1];
+    }
+
+    return opponentScore(finishScore[1]);
+
+  }
+
+  public int findActionTakenByOpponent(Board newBoard, Board oldBoard, GameConfig config) {
+//    Is this fully necessary, or used to speed up?
+    return 0;
+  }
   @Override
   public int makeMove(Board board) {
 
-    LocalDateTime initTime = java.time.LocalDateTime.now();
+    long initTimeMilSecs = System.currentTimeMillis();
     double EMPTY = 0;
-    int T_max = 10;
+    double T_max = 10;
     double Cp_default = 1;
+    GameConfig config = board.getConfig();
 
-    BoardAnalyser boardAnalyser = new BoardAnalyser(board.getConfig());
+    int mark = 0;
+
+//    hmmm... ?
+    Position position = new Position(0, 0);
+
+    StatePython currentState = new StatePython(getCounter(),
+                                    board,
+                                    mark,
+                                    config,
+                                    null,
+                                    false,
+                                    null,
+                                    null);
+
+    BoardAnalyser boardAnalyser = new BoardAnalyser(config);
     List<Integer> availableMoves = new ArrayList<>();
 
-
+//    May not be fully necessary
+//    try {
+//      currentState = currentState.chooseChildViaAction(findActionTakenByOpponent(...));
+//    }
 
 //    DON'T FORGET CODE AFTER STATE CLASS
+
+    while (System.currentTimeMillis() - initTimeMilSecs <= T_max) {
+      currentState.treeSingleRun();
+
+    }
 
     return 3;
   }

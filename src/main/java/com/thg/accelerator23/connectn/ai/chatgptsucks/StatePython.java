@@ -1,19 +1,14 @@
 package com.thg.accelerator23.connectn.ai.chatgptsucks;
 
-import com.thehutgroup.accelerator.connectn.player.Board;
-import com.thehutgroup.accelerator.connectn.player.GameConfig;
-import com.thehutgroup.accelerator.connectn.player.Position;
+import com.thehutgroup.accelerator.connectn.player.*;
 import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.BoardAnalyser;
 
 import javax.lang.model.type.NullType;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
 
 import static java.util.Objects.isNull;
 
-public class StatePython {
+public class StatePython extends ConnectForkMCTSv0 {
     private Board board;
     private int mark;
     private GameConfig config;
@@ -69,28 +64,26 @@ public class StatePython {
         return actionTaken;
     }
 
-    public Position getPosition() {
-        return position;
-    }
-
     private int nodeTotalVisits;
     private ArrayList<Integer> availableMoves;
     private ArrayList<Integer> expandableMoves;
     private boolean isTerminal;
-    private int terminalScore;
-    private int actionTaken;
-    private Position position;
+    private Integer terminalScore;
+    private Integer actionTaken;
 
-    public StatePython(Board board,
+    public StatePython(Counter counter,
+                       Board board,
                        int mark,
                        GameConfig config,
                        StatePython parent,
                        boolean isTerminal,
-                       int terminalScore,
-                       int actionTaken,
-                       Position position) {
+                       Integer terminalScore,
+                       Integer actionTaken)
+        {
+        super(counter);
 
-        BoardAnalyser BoardAnalyser = new BoardAnalyser(config);
+        BoardAnalyser boardAnalyser = new BoardAnalyser(config);
+        ArrayList<Integer> availableMoves = new ArrayList<>();
 
 //        Does board need to be copied like in the Python script?
         this.board = board;
@@ -100,7 +93,16 @@ public class StatePython {
         this.parent = parent;
         this.nodeTotalScore = 0;
         this.nodeTotalVisits = 0;
-        this.availableMoves = BoardAnalyser.validPositions(board, position);
+
+        for (int i = 0; i< board.getConfig().getWidth(); i ++) {
+            try {
+                new Board(board, i, this.getCounter());
+                availableMoves.add(i);
+            } catch (InvalidMoveException e) {
+            }
+        }
+        this.availableMoves = availableMoves;
+
         this.expandableMoves = (ArrayList<Integer>)availableMoves.clone();
         this.isTerminal = isTerminal;
         this.terminalScore = terminalScore;
@@ -119,37 +121,38 @@ public class StatePython {
 //       board as copy again?
         Board childBoard = this.board;
 
-//        play function here - will be in AI agent later
+//        might get us stuck...
+
 
 //        check finish and score function here
 
-        StatePython currentState = new StatePython(board,
+        StatePython currentState = new StatePython(getCounter(),
+                board,
                 mark,
                 config,
                 parent,
                 isTerminal,
                 terminalScore,
-                actionTaken,
-                position);
+                actionTaken);
 
-        StatePython newState1 = new StatePython(board,
+        StatePython newState1 = new StatePython(getCounter(),
+                board,
                 mark,
                 config,
                 currentState,
                 isTerminal,
                 terminalScore,
-                actionTaken,
-                position);
+                actionTaken);
 
-        StatePython newState2 = new StatePython(childBoard,
+        StatePython newState2 = new StatePython(getCounter(),
+                childBoard,
 //                mark needs to be opponentMark(mark) from a function added later
                 mark,
                 config,
                 newState1,
                 isTerminal,
                 terminalScore,
-                actionTaken,
-                position);
+                actionTaken);
 
         ArrayList<StatePython> newChildren = newState2.getChildren();
         this.children.addAll(newChildren);
