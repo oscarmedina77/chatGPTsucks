@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.Random;
 
 
-public class ConnectFork extends Player {
-  public ConnectFork(Counter counter) {
+public class MonteCarloAndTheHolyGrAIl extends Player {
+  public MonteCarloAndTheHolyGrAIl(Counter counter) {
     //TODO: fill in your name here
-    super(counter, ConnectFork.class.getName());
+    super(counter, MonteCarloAndTheHolyGrAIl.class.getName());
   }
 
   @Override
