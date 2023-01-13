@@ -73,13 +73,13 @@ public class ConnectForkMCTSv0 extends Player {
     double[] finishScore = checkFinishAndScore(board, column, mark, config);
 
 //   TODO this may get stuck, make new function?
-    makeMove(board);
+    makeMoveInSim(board, mark);
     System.out.println("are we stuck lmao");
 
     while (!gameState.isEnd()) {
       mark = opponentMark(mark);
       column = randomAction(board, config);
-      makeMove(board);
+      makeMoveInSim(board, mark);
       finishScore = checkFinishAndScore(board, column, mark, config);
     }
 
@@ -100,10 +100,10 @@ public class ConnectForkMCTSv0 extends Player {
 
     double initTimeMilSecs = System.currentTimeMillis();
 //    double EMPTY = 0;
-    double T_max = 10;
+    double T_max = 1000;
     GameConfig config = board.getConfig();
 
-    int mark = 0;
+    int mark = 1;
 
     StatePython currentState = new StatePython(getCounter(),
                                     board,
@@ -124,6 +124,38 @@ public class ConnectForkMCTSv0 extends Player {
 
 //    TODO DON'T FORGET CODE AFTER STATE CLASS - done?
     while (System.currentTimeMillis() - initTimeMilSecs <= T_max) {
+      currentState.treeSingleRun();
+    }
+
+    return currentState.getActionTaken();
+  }
+
+  public int makeMoveInSim(Board board, int mark) {
+
+    double initTimeMilSecsSim = System.currentTimeMillis();
+//    double EMPTY = 0;
+    double T_max = 10;
+    GameConfig config = board.getConfig();
+
+    StatePython currentState = new StatePython(getCounter(),
+            board,
+            mark,
+            config,
+            null,
+            false,
+            null,
+            null);
+
+    BoardAnalyser boardAnalyser = new BoardAnalyser(config);
+    List<Integer> availableMoves = new ArrayList<>();
+
+//    TODO - May not be fully necessary?
+//    try {
+//      currentState = currentState.chooseChildViaAction(findActionTakenByOpponent(...));
+//    }
+
+//    TODO DON'T FORGET CODE AFTER STATE CLASS - done?
+    while (System.currentTimeMillis() - initTimeMilSecsSim <= T_max) {
       currentState.treeSingleRun();
     }
 

@@ -16,6 +16,50 @@ public class StatePython extends ConnectForkMCTSv0 {
     private ArrayList<StatePython> children;
     private StatePython parent;
     private double nodeTotalScore;
+    private int nodeTotalVisits;
+    private ArrayList<Integer> availableMoves;
+    private ArrayList<Integer> expandableMoves;
+    private boolean isTerminal;
+    private Double terminalScore;
+    private Integer actionTaken;
+
+    public StatePython(Counter counter,
+                       Board board,
+                       int mark,
+                       GameConfig config,
+                       StatePython parent,
+                       boolean isTerminal,
+                       Double terminalScore,
+                       Integer actionTaken)
+        {
+        super(counter);
+
+        BoardAnalyser boardAnalyser = new BoardAnalyser(config);
+        ArrayList<Integer> availableMoves = new ArrayList<>();
+
+//        Does board need to be copied like in the Python script?
+        this.board = getBoard();
+        this.mark = mark;
+        this.config = config;
+        this.children = new ArrayList<StatePython>();
+        this.parent = parent;
+        this.nodeTotalScore = 0;
+        this.nodeTotalVisits = 0;
+
+        for (int i = 0; i< board.getConfig().getWidth(); i ++) {
+            try {
+                new Board(board, i, this.getCounter());
+                availableMoves.add(i);
+            } catch (InvalidMoveException e) {
+            }
+        }
+
+        this.availableMoves = getAvailableMoves();
+        this.expandableMoves = this.availableMoves;
+        this.isTerminal = isTerminal;
+        this.terminalScore = terminalScore;
+        this.actionTaken = actionTaken;
+    }
 
     public Board getBoard() {
         return board;
@@ -65,51 +109,6 @@ public class StatePython extends ConnectForkMCTSv0 {
         return actionTaken;
     }
 
-    private int nodeTotalVisits;
-    private ArrayList<Integer> availableMoves;
-    private ArrayList<Integer> expandableMoves;
-    private boolean isTerminal;
-    private Double terminalScore;
-    private Integer actionTaken;
-
-    public StatePython(Counter counter,
-                       Board board,
-                       int mark,
-                       GameConfig config,
-                       StatePython parent,
-                       boolean isTerminal,
-                       Double terminalScore,
-                       Integer actionTaken)
-        {
-        super(counter);
-
-        BoardAnalyser boardAnalyser = new BoardAnalyser(config);
-        ArrayList<Integer> availableMoves = new ArrayList<>();
-
-//        Does board need to be copied like in the Python script?
-        this.board = getBoard();
-        this.mark = mark;
-        this.config = config;
-        this.children = new ArrayList<StatePython>();
-        this.parent = parent;
-        this.nodeTotalScore = 0;
-        this.nodeTotalVisits = 0;
-
-        for (int i = 0; i< board.getConfig().getWidth(); i ++) {
-            try {
-                new Board(board, i, this.getCounter());
-                availableMoves.add(i);
-            } catch (InvalidMoveException e) {
-            }
-        }
-
-        this.availableMoves = getAvailableMoves();
-        this.expandableMoves = (ArrayList<Integer>)this.availableMoves;
-        this.isTerminal = isTerminal;
-        this.terminalScore = terminalScore;
-        this.actionTaken = actionTaken;
-    }
-
     public boolean isExpandable() {
         try {
             this.expandableMoves.size();
@@ -130,15 +129,23 @@ public class StatePython extends ConnectForkMCTSv0 {
         Board childBoard = getBoard();
 
 //      TODO  might get us stuck...
+        int moveSim = makeMoveInSim(childBoard, mark);
+        availableMoves.add(moveSim);
+        int moveSimValid = availableMoves.get(new Random().nextInt(availableMoves.size()));
 
+        Board childBoardSim = null;
+        try {
+            childBoardSim = new Board(childBoard, moveSimValid, this.getCounter());
+        } catch (InvalidMoveException e) {
+            return;
+        }
 
-        double[] finishScore = checkFinishAndScore(childBoard, column, this.mark, this.getConfig());
+        double[] finishScore = checkFinishAndScore(childBoardSim, column, this.mark, this.getConfig());
 
         boolean finishBool;
         if (finishScore[0] == 0) {
             finishBool = true;
-        }
-        else {
+        } else {
             finishBool = false;
         }
 
