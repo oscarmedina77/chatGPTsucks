@@ -33,7 +33,7 @@ public class StatePython extends ConnectForkMCTSv0 {
                        int mark,
                        GameConfig config,
                        StatePython parent,
-                       boolean isTerminal,
+                       Boolean isTerminal,
                        Double terminalScore,
                        Integer actionTaken)
         {
@@ -102,7 +102,7 @@ public class StatePython extends ConnectForkMCTSv0 {
         return expandableMoves;
     }
 
-    public boolean isTerminal() {
+    public Boolean isTerminal() {
         return isTerminal;
     }
 
@@ -110,7 +110,7 @@ public class StatePython extends ConnectForkMCTSv0 {
         return terminalScore;
     }
 
-    public int getActionTaken() {
+    public Integer getActionTaken() {
         return actionTaken;
     }
 
@@ -122,18 +122,24 @@ public class StatePython extends ConnectForkMCTSv0 {
         }
 
 //        TODO can we just remove second condition?
-        return !this.isTerminal && Array.getLength(this.expandableMoves) > 0;
+        return !this.isTerminal && this.getExpandableMoves().size() > 0;
     }
 
     public void expandSimulateChild() {
         Random rand = new Random();
         int randIndex = rand.nextInt(0, this.expandableMoves.size());
-        int column = (int) Array.get(this.expandableMoves, randIndex);
+        int column = this.getExpandableMoves().get(randIndex);
 
 //     TODO  board as copy again? - OK?
-        Board childBoard = getBoard();
+        Board childBoard = null;
+        try {
+            childBoard = new Board(this.board, this.getActionTaken(), this.getCounter());
+        } catch (Exception e) {
+            return;
+        }
 
 //      TODO might get us stuck - OK?
+        System.out.println("exMoves size =  " + this.expandableMoves.size());
         Board childBoardSim = makeMoveInSim(childBoard, mark, 10);
 
 //        TODO - now covered by returning board above?
@@ -157,7 +163,7 @@ public class StatePython extends ConnectForkMCTSv0 {
         }
 
         StatePython currentState = new StatePython(getCounter(),
-                getBoard(),
+                this.getBoard(),
                 mark,
                 config,
                 parent,
@@ -197,6 +203,7 @@ public class StatePython extends ConnectForkMCTSv0 {
         if (score != 0.0) {
             double maxScore = Collections.max(childrenScores);
             int bestChildIndex = childrenScores.indexOf(maxScore);
+//            getChildren() ?
             return this.children.get(bestChildIndex);
         }
 
@@ -210,36 +217,49 @@ public class StatePython extends ConnectForkMCTSv0 {
 
     public StatePython choosePlayChild() {
         ArrayList<Double> childrenScores = new ArrayList<>();
+        Double ntScore = 0.0;
 
-        for (StatePython child : this.children) {
-            childrenScores.add(child.nodeTotalScore);
+        for (StatePython child : this.getChildren()) {
+            ntScore = child.getNodeTotalScore();
+            System.out.println("child nodeTotalScore = " + ntScore);
+            childrenScores.add(ntScore);
         }
 
-        double maxScore = Collections.max(childrenScores);
-        int bestChildIndex = childrenScores.indexOf(maxScore);
-        return this.children.get(bestChildIndex);
+        if (ntScore != 0) {
+            double maxScore = Collections.max(childrenScores);
+            int bestChildIndex = childrenScores.indexOf(maxScore);
+//             getChildren() ?
+            return this.children.get(bestChildIndex);
+        }
+        else {
+            try {
+                return this.getParent();
+            }
+            catch (NullPointerException e) {
+                return null;
+            }
+        }
     }
 
     public void treeSingleRun() {
-        if (this.isTerminal) {
+        if (this.isTerminal()) {
             this.backPropagate(this.getTerminalScore());
-            System.out.println("stuck Terminal");
+//            System.out.println("stuck Terminal");
             return;
         }
         if (this.isExpandable()) {
             this.expandSimulateChild();
-            System.out.println("stuck Expandable");
+//            System.out.println("stuck Expandable");
             return;
         }
-        System.out.println("stuck at end");
-        System.out.println("isTerminal = " + isTerminal);
-        System.out.println("isExpandable = " + isExpandable());
+//        System.out.println("stuck at end");
+//        System.out.println("isTerminal = " + isTerminal());
+//        System.out.println("isExpandable = " + isExpandable());
         this.chooseStrongestChild(Cp_default).treeSingleRun();
-        return;
     }
 
     public double simulate() {
-        if (this.isTerminal) {
+        if (this.isTerminal()) {
             return this.terminalScore;
         }
 //        TODO - leave out?

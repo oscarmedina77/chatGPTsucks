@@ -12,7 +12,7 @@ public class ConnectForkMCTSv0 extends Player {
   private Board board;
   private int mark = 0;
   private GameConfig config;
-  double Cp_default = 1;
+  double Cp_default = 1.0;
 //  StatePython currentState = new StatePython(getCounter(),
 //                                              board,
 //                                              mark,
@@ -103,7 +103,6 @@ public class ConnectForkMCTSv0 extends Player {
   public int makeMove(Board board) {
 
     double initTimeMilSecs = System.currentTimeMillis();
-    System.out.println("Time = " + initTimeMilSecs);
 //    double EMPTY = 0;
     double T_max = 1000;
     GameConfig config = board.getConfig();
@@ -145,11 +144,27 @@ public class ConnectForkMCTSv0 extends Player {
     }
 
     while (System.currentTimeMillis() - initTimeMilSecs <= T_max) {
+//      System.out.println("Time in makeMove while loop = " + (System.currentTimeMillis() - initTimeMilSecs));
       currentState.treeSingleRun();
     }
 
-    currentState = currentState.choosePlayChild();
-    return currentState.getActionTaken();
+//    if board not empty???
+    try {
+      currentState = currentState.choosePlayChild();
+      return currentState.getActionTaken();
+    }
+    catch (NullPointerException npE) {
+//      return random move for first move, does this work?
+      List<Integer> availableMoves =  new ArrayList<>();
+      for (int i = 0; i< board.getConfig().getWidth(); i ++){
+        try {
+          new Board(board, i, this.getCounter());
+          availableMoves.add(i);
+        } catch (InvalidMoveException e) {
+        }
+      }
+      return availableMoves.get(new Random().nextInt(availableMoves.size()));
+    }
   }
 
   public Board makeMoveInSim(Board board, int mark, int episodes) {
