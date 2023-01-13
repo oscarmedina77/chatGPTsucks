@@ -177,7 +177,7 @@ public class StatePython extends ConnectForkMCTSv0 {
 
     public StatePython chooseStrongestChild(double Cp) {
         ArrayList<Double> childrenScores = new ArrayList<>();
-        Double score = null;
+        Double score = 0.0;
 
         for (StatePython child : this.getChildren()) {
             score = uctScore(child.getNodeTotalScore(),
@@ -186,7 +186,7 @@ public class StatePython extends ConnectForkMCTSv0 {
                     Cp);
             childrenScores.add(score);
         }
-        if (!isNull(score)) {
+        if (score != 0.0) {
             double maxScore = Collections.max(childrenScores);
             int bestChildIndex = childrenScores.indexOf(maxScore);
             return this.children.get(bestChildIndex);
@@ -196,7 +196,7 @@ public class StatePython extends ConnectForkMCTSv0 {
 //            - or are we stuck in a loop somewhere else?
 
         else {
-            return null;
+            return this.getParent();
         }
     }
 

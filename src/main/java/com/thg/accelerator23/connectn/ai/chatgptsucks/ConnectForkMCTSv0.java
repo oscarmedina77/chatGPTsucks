@@ -100,6 +100,7 @@ public class ConnectForkMCTSv0 extends Player {
   public int makeMove(Board board) {
 
     double initTimeMilSecs = System.currentTimeMillis();
+    System.out.println("Time = " + initTimeMilSecs);
 //    double EMPTY = 0;
     double T_max = 1000;
     GameConfig config = board.getConfig();
