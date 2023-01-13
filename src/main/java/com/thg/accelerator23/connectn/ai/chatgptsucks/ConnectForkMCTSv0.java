@@ -8,19 +8,23 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.ToDoubleBiFunction;
 
 public class ConnectForkMCTSv0 extends Player {
   private static Board board;
+  double Cp_default = 1;
 
-//  Observation???
-//  global currentState?
+//  TODO Observation???
+//  TODO global currentState?
 
   public ConnectForkMCTSv0(Counter counter) {
     //TODO: fill in your name here
     super(counter, ConnectForkMCTSv0.class.getName());
   }
 
-  public double[] checkFinishAndScore(Counter winner, int column, int mark, GameConfig config) {
+  public double[] checkFinishAndScore(Board board, int column, int mark, GameConfig config) {
+    Counter winner = getCounter();
+
     GameState gameState = new GameState(winner);
     if (gameState.isWin()) {
       return new double[]{1, 1};
@@ -66,9 +70,9 @@ public class ConnectForkMCTSv0 extends Player {
     double originalMark = mark;
     int column = randomAction(board, config);
 
-    double[] finishScore = checkFinishAndScore(winner, column, mark, config);
+    double[] finishScore = checkFinishAndScore(board, column, mark, config);
 
-//    this may get stuck, make new function?
+//   TODO this may get stuck, make new function?
     makeMove(board);
     System.out.println("are we stuck lmao");
 
@@ -76,7 +80,7 @@ public class ConnectForkMCTSv0 extends Player {
       mark = opponentMark(mark);
       column = randomAction(board, config);
       makeMove(board);
-      finishScore = checkFinishAndScore(winner, column, mark, config);
+      finishScore = checkFinishAndScore(board, column, mark, config);
     }
 
     if (mark == originalMark) {
@@ -88,22 +92,18 @@ public class ConnectForkMCTSv0 extends Player {
   }
 
   public int findActionTakenByOpponent(Board newBoard, Board oldBoard, GameConfig config) {
-//    Is this fully necessary, or used to speed up?
+//    TODO Is this fully necessary, or used to speed up?
     return 0;
   }
   @Override
   public int makeMove(Board board) {
 
-    long initTimeMilSecs = System.currentTimeMillis();
-    double EMPTY = 0;
+    double initTimeMilSecs = System.currentTimeMillis();
+//    double EMPTY = 0;
     double T_max = 10;
-    double Cp_default = 1;
     GameConfig config = board.getConfig();
 
     int mark = 0;
-
-//    hmmm... ?
-    Position position = new Position(0, 0);
 
     StatePython currentState = new StatePython(getCounter(),
                                     board,
@@ -117,19 +117,17 @@ public class ConnectForkMCTSv0 extends Player {
     BoardAnalyser boardAnalyser = new BoardAnalyser(config);
     List<Integer> availableMoves = new ArrayList<>();
 
-//    May not be fully necessary
+//    TODO May not be fully necessary
 //    try {
 //      currentState = currentState.chooseChildViaAction(findActionTakenByOpponent(...));
 //    }
 
-//    DON'T FORGET CODE AFTER STATE CLASS
-
+//    TODO DON'T FORGET CODE AFTER STATE CLASS
     while (System.currentTimeMillis() - initTimeMilSecs <= T_max) {
       currentState.treeSingleRun();
-
     }
 
-    return 3;
+    return currentState.getActionTaken();
   }
 }
 

@@ -2,6 +2,7 @@ package com.thg.accelerator23.connectn.ai.chatgptsucks;
 
 import com.thehutgroup.accelerator.connectn.player.*;
 import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.BoardAnalyser;
+import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.GameState;
 
 import javax.lang.model.type.NullType;
 import java.util.*;
@@ -115,16 +116,16 @@ public class StatePython extends ConnectForkMCTSv0 {
 
     public void expandSimulateChild() {
         Random rand = new Random();
-        int randIndex = rand.nextInt(this.expandableMoves.size());
+        int randIndex = rand.nextInt(this.expandableMoves.size() - 1);
         int column = this.expandableMoves.get(randIndex);
 
-//       board as copy again?
+//     TODO  board as copy again?
         Board childBoard = this.board;
 
-//        might get us stuck...
+//      TODO  might get us stuck...
 
 
-//        check finish and score function here
+        double[] finishScore = checkFinishAndScore(childBoard, column, this.mark, this.getConfig());
 
         StatePython currentState = new StatePython(getCounter(),
                 board,
@@ -182,14 +183,14 @@ public class StatePython extends ConnectForkMCTSv0 {
 
     public Object treeSingleRun() {
         if (this.isTerminal) {
-//            this.backpropagate(this.terminalScore); ADD
+            this.backPropagate(this.terminalScore);
             return null;
         }
-//        if (this.isExpandable()) {
-//            this.expandSimulateChild()
-//            return null;
-//        }
-//        this.chooseStrongestChild(Cp_default).treeSingleRun(); where does Cp default come in?
+        if (this.isExpandable()) {
+            this.expandSimulateChild();
+            return null;
+        }
+        this.chooseStrongestChild(Cp_default).treeSingleRun();
         return null;
     }
 
@@ -197,15 +198,16 @@ public class StatePython extends ConnectForkMCTSv0 {
         if (this.isTerminal) {
             return this.terminalScore;
         }
-//        return - ADD opponentScore function
-        return 0.0;
+//        TODO - leave out?
+//        this.gameState = new GameState(winner);
+        return opponentScore(defaultPolicySimulation(this.board, this.mark, this.config, new GameState(this.getCounter()), this.getCounter()));
     }
 
     public void backPropagate(double simulationScore) {
         this.nodeTotalScore += simulationScore;
         this.nodeTotalVisits += 1;
         if (!isNull(this.parent)) {
-//            this.parent.backPropagate(*function*); opponentScore
+            this.parent.backPropagate(opponentScore(simulationScore));
         }
     }
 
