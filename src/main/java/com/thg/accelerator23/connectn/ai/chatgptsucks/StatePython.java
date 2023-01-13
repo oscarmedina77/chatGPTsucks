@@ -57,7 +57,7 @@ public class StatePython extends ConnectForkMCTSv0 {
         return isTerminal;
     }
 
-    public int getTerminalScore() {
+    public Double getTerminalScore() {
         return terminalScore;
     }
 
@@ -69,7 +69,7 @@ public class StatePython extends ConnectForkMCTSv0 {
     private ArrayList<Integer> availableMoves;
     private ArrayList<Integer> expandableMoves;
     private boolean isTerminal;
-    private Integer terminalScore;
+    private Double terminalScore;
     private Integer actionTaken;
 
     public StatePython(Counter counter,
@@ -78,7 +78,7 @@ public class StatePython extends ConnectForkMCTSv0 {
                        GameConfig config,
                        StatePython parent,
                        boolean isTerminal,
-                       Integer terminalScore,
+                       Double terminalScore,
                        Integer actionTaken)
         {
         super(counter);
@@ -134,6 +134,14 @@ public class StatePython extends ConnectForkMCTSv0 {
 
         double[] finishScore = checkFinishAndScore(childBoard, column, this.mark, this.getConfig());
 
+        boolean finishBool;
+        if (finishScore[0] == 0) {
+            finishBool = true;
+        }
+        else {
+            finishBool = false;
+        }
+
         StatePython currentState = new StatePython(getCounter(),
                 getBoard(),
                 mark,
@@ -143,26 +151,16 @@ public class StatePython extends ConnectForkMCTSv0 {
                 terminalScore,
                 actionTaken);
 
-        StatePython newState1 = new StatePython(getCounter(),
-                getBoard(),
-                mark,
+        StatePython newChild = new StatePython(getCounter(),
+                childBoard,
+                opponentMark(mark),
                 config,
                 currentState,
-                isTerminal,
-                terminalScore,
+                finishBool,
+                finishScore[1],
                 actionTaken);
 
-        StatePython newState2 = new StatePython(getCounter(),
-                childBoard,
-//                mark needs to be opponentMark(mark) from a function added later
-                mark,
-                config,
-                newState1,
-                isTerminal,
-                terminalScore,
-                actionTaken);
-
-        ArrayList<StatePython> newChildren = newState2.getChildren();
+        ArrayList<StatePython> newChildren = newChild.getChildren();
         this.children.addAll(newChildren);
 
         this.expandableMoves.remove(column);
