@@ -1,19 +1,22 @@
 package com.thg.accelerator23.connectn.ai.chatgptsucks;
 
-import com.thehutgroup.accelerator.connectn.player.*;
-import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.BoardAnalyser;
+import com.thehutgroup.accelerator.connectn.player.Board;
+import com.thehutgroup.accelerator.connectn.player.Counter;
+import com.thehutgroup.accelerator.connectn.player.GameConfig;
+import com.thehutgroup.accelerator.connectn.player.InvalidMoveException;
 import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.GameState;
 
-import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
 
 import static java.util.Objects.isNull;
 
 public class StatePython extends ConnectForkMCTSv0 {
-    private final Board board;
-    private final int mark;
-    private final GameConfig config;
-    private final ArrayList<StatePython> children;
+    private Board board;
+    private int mark;
+    private GameConfig config;
+    private ArrayList<StatePython> children;
 
     public void setParent(StatePython parent) {
         this.parent = parent;

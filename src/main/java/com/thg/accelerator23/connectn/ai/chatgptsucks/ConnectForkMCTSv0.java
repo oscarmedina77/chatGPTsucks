@@ -10,7 +10,7 @@ import java.util.Random;
 
 public class ConnectForkMCTSv0 extends Player {
   private Board board;
-  private final int mark = 0;
+  private int mark = 1;
   private GameConfig config;
   double Cp_default = 1.0;
 //  StatePython currentState = new StatePython(getCounter(),
@@ -71,6 +71,7 @@ public class ConnectForkMCTSv0 extends Player {
       } catch (InvalidMoveException e) {
       }
     }
+    System.out.println("****** randomAction returned random valid");
     return availableMoves.get(new Random().nextInt(availableMoves.size()));
   }
 
@@ -85,12 +86,15 @@ public class ConnectForkMCTSv0 extends Player {
     makeMoveInSim(board, mark);
     System.out.println("are we stuck lmao");
 
+    int dfpsCounter = 0;
     while (finishScore[0] != 0.0) {
+      dfpsCounter = dfpsCounter + 1;
       mark = opponentMark(mark);
       column = randomAction(board, config);
       makeMoveInSim(board, mark);
       finishScore = checkFinishAndScore(board, column, mark, config);
     }
+    System.out.println("dfpsCounter = " + dfpsCounter);
 
     if (mark == originalMark) {
       return finishScore[1];
@@ -129,6 +133,7 @@ public class ConnectForkMCTSv0 extends Player {
     try {
 //      TODO - needed?
 //      intState = new Board(intState, currentState.getActionTaken(), this.getCounter());
+      System.out.println("makeMove try failed :(");
       currentState = currentState.chooseChildViaAction(currentState.getActionTaken());
       currentState.setParent(null);
 
@@ -143,10 +148,13 @@ public class ConnectForkMCTSv0 extends Player {
               null);
     }
 
+    int makeMoveCounter = 0;
     while (System.currentTimeMillis() - initTimeMilSecs <= T_max) {
 //      System.out.println("Time in makeMove while loop = " + (System.currentTimeMillis() - initTimeMilSecs));
+      makeMoveCounter = makeMoveCounter + 1;
       currentState.treeSingleRun();
     }
+    System.out.println("makeMoveCounter = " + makeMoveCounter);
 
 //    if board not empty???
     try {
@@ -163,6 +171,7 @@ public class ConnectForkMCTSv0 extends Player {
         } catch (InvalidMoveException e) {
         }
       }
+      System.out.println("makeMove returned random valid");
       return availableMoves.get(new Random().nextInt(availableMoves.size()));
     }
   }
@@ -174,10 +183,9 @@ public class ConnectForkMCTSv0 extends Player {
 //    TODO should we not just take a valid random?
   public Board makeMoveInSim(Board board, int mark) {
 
-    double initTimeMilSecsSim = System.currentTimeMillis();
+//    double initTimeMilSecsSim = System.currentTimeMillis();
 //    double EMPTY = 0;
-//    TODO - epipodes used instead, time might be better
-    double T_max = 900;
+//    double T_max = 900;
     GameConfig config = board.getConfig();
 
     StatePython currentState = new StatePython(getCounter(),
