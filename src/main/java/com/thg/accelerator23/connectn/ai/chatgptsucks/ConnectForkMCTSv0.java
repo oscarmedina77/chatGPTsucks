@@ -10,7 +10,7 @@ import java.util.Random;
 
 public class ConnectForkMCTSv0 extends Player {
   private Board board;
-  private int mark = 0;
+  private final int mark = 0;
   private GameConfig config;
   double Cp_default = 1.0;
 //  StatePython currentState = new StatePython(getCounter(),
@@ -64,7 +64,7 @@ public class ConnectForkMCTSv0 extends Player {
 //    BoardAnalyser boardAnalyser = new BoardAnalyser(board.getConfig());
     List<Integer> availableMoves =  new ArrayList<>();
 
-    for (int i = 0; i< board.getConfig().getWidth(); i ++){
+    for (int i = 0; i < board.getConfig().getWidth(); i++){
       try {
         new Board(board, i, this.getCounter());
         availableMoves.add(i);
@@ -77,18 +77,18 @@ public class ConnectForkMCTSv0 extends Player {
   public double defaultPolicySimulation(Board board, int mark, GameConfig config, GameState gameState) {
     double originalMark = mark;
     int column = randomAction(board, config);
-    int episodes = 10;
+//    int episodes = 1000;
 
     double[] finishScore = checkFinishAndScore(board, column, mark, config);
 
 //   TODO this may get stuck, make new function?
-    makeMoveInSim(board, mark, episodes);
+    makeMoveInSim(board, mark);
     System.out.println("are we stuck lmao");
 
-    while (!gameState.isEnd()) {
+    while (finishScore[0] != 0.0) {
       mark = opponentMark(mark);
       column = randomAction(board, config);
-      makeMoveInSim(board, mark, episodes);
+      makeMoveInSim(board, mark);
       finishScore = checkFinishAndScore(board, column, mark, config);
     }
 
@@ -104,7 +104,7 @@ public class ConnectForkMCTSv0 extends Player {
 
     double initTimeMilSecs = System.currentTimeMillis();
 //    double EMPTY = 0;
-    double T_max = 1000;
+    double T_max = 900;
     GameConfig config = board.getConfig();
 
     int mark = 1;
@@ -167,11 +167,12 @@ public class ConnectForkMCTSv0 extends Player {
     }
   }
 
-  public Board makeMoveInSim(Board board, int mark, int episodes) {
+  public Board makeMoveInSim(Board board, int mark) {
 
-//    double initTimeMilSecsSim = System.currentTimeMillis();
+    double initTimeMilSecsSim = System.currentTimeMillis();
 //    double EMPTY = 0;
-//    double T_max = 10;
+//    TODO - epipodes used instead, time might be better
+    double T_max = 900;
     GameConfig config = board.getConfig();
 
     StatePython currentState = new StatePython(getCounter(),
@@ -192,7 +193,7 @@ public class ConnectForkMCTSv0 extends Player {
 //    }
 
 //    TODO DON'T FORGET CODE AFTER STATE CLASS - done? I think...
-    for (int ep = 0; ep <= episodes; ep++) {
+    while (System.currentTimeMillis() - initTimeMilSecsSim <= T_max) {
       currentState.treeSingleRun();
     }
 

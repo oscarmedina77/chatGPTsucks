@@ -13,12 +13,12 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class BoardAnalyser {
-    private Function<Position, Position> hMover = p -> new Position(p.getX() + 1, p.getY());
-    private Function<Position, Position> vMover = p -> new Position(p.getX(), p.getY() + 1);
-    private Function<Position, Position> diagUpRightMover = hMover.compose(vMover);
-    private Function<Position, Position> diagUpLeftMover =
+    private final Function<Position, Position> hMover = p -> new Position(p.getX() + 1, p.getY());
+    private final Function<Position, Position> vMover = p -> new Position(p.getX(), p.getY() + 1);
+    private final Function<Position, Position> diagUpRightMover = hMover.compose(vMover);
+    private final Function<Position, Position> diagUpLeftMover =
             p -> new Position(p.getX() - 1, p.getY() + 1);
-    private Map<Function<Position, Position>, List<Position>> positionsByFunction;
+    private final Map<Function<Position, Position>, List<Position>> positionsByFunction;
 
     public BoardAnalyser(GameConfig config) {
         positionsByFunction = new HashMap<>();

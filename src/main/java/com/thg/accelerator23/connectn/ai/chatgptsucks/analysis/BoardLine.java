@@ -9,9 +9,9 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public class BoardLine implements Line {
-    private Board board;
+    private final Board board;
     private Position currentPosition;
-    private Function<Position, Position> movementFunction;
+    private final Function<Position, Position> movementFunction;
 
     public BoardLine(Board board, Position currentPosition,
                      Function<Position, Position> movementFunction) {

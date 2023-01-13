@@ -10,10 +10,10 @@ import java.util.*;
 import static java.util.Objects.isNull;
 
 public class StatePython extends ConnectForkMCTSv0 {
-    private Board board;
-    private int mark;
-    private GameConfig config;
-    private ArrayList<StatePython> children;
+    private final Board board;
+    private final int mark;
+    private final GameConfig config;
+    private final ArrayList<StatePython> children;
 
     public void setParent(StatePython parent) {
         this.parent = parent;
@@ -22,11 +22,11 @@ public class StatePython extends ConnectForkMCTSv0 {
     private StatePython parent;
     private double nodeTotalScore;
     private int nodeTotalVisits;
-    private ArrayList<Integer> availableMoves;
-    private ArrayList<Integer> expandableMoves;
-    private boolean isTerminal;
-    private Double terminalScore;
-    private Integer actionTaken;
+    private final ArrayList<Integer> availableMoves;
+    private final ArrayList<Integer> expandableMoves;
+    private final boolean isTerminal;
+    private final Double terminalScore;
+    private final Integer actionTaken;
 
     public StatePython(Counter counter,
                        Board board,
@@ -140,7 +140,7 @@ public class StatePython extends ConnectForkMCTSv0 {
 
 //      TODO might get us stuck - OK?
         System.out.println("exMoves size =  " + this.expandableMoves.size());
-        Board childBoardSim = makeMoveInSim(childBoard, mark, 10);
+        Board childBoardSim = makeMoveInSim(childBoard, mark);
 
 //        TODO - now covered by returning board above?
 //        availableMoves.add(moveSim);
@@ -156,11 +156,7 @@ public class StatePython extends ConnectForkMCTSv0 {
         double[] finishScore = checkFinishAndScore(childBoardSim, column, this.mark, this.getConfig());
 
         boolean finishBool;
-        if (finishScore[0] == 0) {
-            finishBool = true;
-        } else {
-            finishBool = false;
-        }
+        finishBool = finishScore[0] == 0;
 
         StatePython currentState = new StatePython(getCounter(),
                 this.getBoard(),
