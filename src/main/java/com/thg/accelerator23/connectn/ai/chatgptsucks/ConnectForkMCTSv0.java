@@ -167,6 +167,11 @@ public class ConnectForkMCTSv0 extends Player {
     }
   }
 
+//  public Board makeMoveRandEmpty(Board board, int mark) {
+//      hmmm...
+//  }
+
+//    TODO should we not just take a valid random?
   public Board makeMoveInSim(Board board, int mark) {
 
     double initTimeMilSecsSim = System.currentTimeMillis();
@@ -192,10 +197,11 @@ public class ConnectForkMCTSv0 extends Player {
 //      currentState = currentState.chooseChildViaAction(findActionTakenByOpponent(...));
 //    }
 
-//    TODO DON'T FORGET CODE AFTER STATE CLASS - done? I think...
-    while (System.currentTimeMillis() - initTimeMilSecsSim <= T_max) {
-      currentState.treeSingleRun();
-    }
+//    TODO - not sure this is right...
+//    while (System.currentTimeMillis() - initTimeMilSecsSim <= T_max) {
+//      currentState.treeSingleRun();
+//    }
+    currentState.treeSingleRun();
 
     currentState = currentState.choosePlayChild();
 
