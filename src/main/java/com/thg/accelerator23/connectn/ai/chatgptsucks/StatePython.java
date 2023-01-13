@@ -14,6 +14,11 @@ public class StatePython extends ConnectForkMCTSv0 {
     private int mark;
     private GameConfig config;
     private ArrayList<StatePython> children;
+
+    public void setParent(StatePython parent) {
+        this.parent = parent;
+    }
+
     private StatePython parent;
     private double nodeTotalScore;
     private int nodeTotalVisits;
@@ -34,14 +39,14 @@ public class StatePython extends ConnectForkMCTSv0 {
         {
         super(counter);
 
-        BoardAnalyser boardAnalyser = new BoardAnalyser(config);
+//        BoardAnalyser boardAnalyser = new BoardAnalyser(config);
         ArrayList<Integer> availableMoves = new ArrayList<>();
 
 //        Does board need to be copied like in the Python script?
         this.board = getBoard();
         this.mark = mark;
         this.config = config;
-        this.children = new ArrayList<StatePython>();
+        this.children = new ArrayList<>();
         this.parent = parent;
         this.nodeTotalScore = 0;
         this.nodeTotalVisits = 0;
@@ -53,8 +58,8 @@ public class StatePython extends ConnectForkMCTSv0 {
             } catch (InvalidMoveException e) {
             }
         }
-
-        this.availableMoves = getAvailableMoves();
+        this.availableMoves = availableMoves;
+//        this.availableMoves = getAvailableMoves();
         this.expandableMoves = this.availableMoves;
         this.isTerminal = isTerminal;
         this.terminalScore = terminalScore;
@@ -89,9 +94,9 @@ public class StatePython extends ConnectForkMCTSv0 {
         return nodeTotalVisits;
     }
 
-    public ArrayList<Integer> getAvailableMoves() {
-        return availableMoves;
-    }
+//    public ArrayList<Integer> getAvailableMoves() {
+//        return availableMoves;
+//    }
 
     public ArrayList<Integer> getExpandableMoves() {
         return expandableMoves;
@@ -111,7 +116,7 @@ public class StatePython extends ConnectForkMCTSv0 {
 
     public boolean isExpandable() {
         try {
-            this.expandableMoves.size();
+            this.getExpandableMoves().size();
         } catch (NullPointerException nullPointerException) {
             return false;
         }
@@ -172,6 +177,9 @@ public class StatePython extends ConnectForkMCTSv0 {
         ArrayList<StatePython> newChildren = newChild.getChildren();
         this.children.addAll(newChildren);
 
+        double simScore = this.children.get(this.children.size() - 1).simulate();
+        this.children.get(this.children.size() - 1).backPropagate(simScore);
+
         this.expandableMoves.remove(column);
     }
 
@@ -214,7 +222,7 @@ public class StatePython extends ConnectForkMCTSv0 {
 
     public void treeSingleRun() {
         if (this.isTerminal) {
-            this.backPropagate(this.terminalScore);
+            this.backPropagate(this.getTerminalScore());
             System.out.println("stuck Terminal");
             return;
         }
@@ -236,7 +244,7 @@ public class StatePython extends ConnectForkMCTSv0 {
         }
 //        TODO - leave out?
 //        this.gameState = new GameState(winner);
-        return opponentScore(defaultPolicySimulation(this.board, this.mark, this.config, new GameState(this.getCounter()), this.getCounter()));
+        return opponentScore(defaultPolicySimulation(this.board, this.mark, this.config, new GameState(this.getCounter())));
     }
 
     public void backPropagate(double simulationScore) {
@@ -253,6 +261,8 @@ public class StatePython extends ConnectForkMCTSv0 {
                 return child;
             }
         }
-        return null;
+//        TODO - return this.parent or null ?
+        return this.getParent();
+//        return null;
     }
 }

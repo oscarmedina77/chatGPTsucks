@@ -4,15 +4,23 @@ import com.thehutgroup.accelerator.connectn.player.*;
 import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.BoardAnalyser;
 import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.GameState;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.function.ToDoubleBiFunction;
 
 public class ConnectForkMCTSv0 extends Player {
-  private static Board board;
+  private Board board;
+  private int mark = 0;
+  private GameConfig config;
   double Cp_default = 1;
+//  StatePython currentState = new StatePython(getCounter(),
+//                                              board,
+//                                              mark,
+//                                              config,
+//                                              null,
+//                                              false,
+//                                              null,
+//                                              null);
 
 //  TODO Observation???
 //  TODO global currentState?
@@ -53,7 +61,7 @@ public class ConnectForkMCTSv0 extends Player {
   }
 
   public int randomAction(Board board, GameConfig config) {
-    BoardAnalyser boardAnalyser = new BoardAnalyser(board.getConfig());
+//    BoardAnalyser boardAnalyser = new BoardAnalyser(board.getConfig());
     List<Integer> availableMoves =  new ArrayList<>();
 
     for (int i = 0; i< board.getConfig().getWidth(); i ++){
@@ -66,7 +74,7 @@ public class ConnectForkMCTSv0 extends Player {
     return availableMoves.get(new Random().nextInt(availableMoves.size()));
   }
 
-  public double defaultPolicySimulation(Board board, int mark, GameConfig config, GameState gameState, Counter winner) {
+  public double defaultPolicySimulation(Board board, int mark, GameConfig config, GameState gameState) {
     double originalMark = mark;
     int column = randomAction(board, config);
     int episodes = 10;
@@ -89,13 +97,8 @@ public class ConnectForkMCTSv0 extends Player {
     }
 
     return opponentScore(finishScore[1]);
-
   }
 
-  public int findActionTakenByOpponent(Board newBoard, Board oldBoard, GameConfig config) {
-//    TODO Is this fully necessary, or used to speed up?
-    return 0;
-  }
   @Override
   public int makeMove(Board board) {
 
@@ -116,15 +119,31 @@ public class ConnectForkMCTSv0 extends Player {
                                     null,
                                     null);
 
-    BoardAnalyser boardAnalyser = new BoardAnalyser(config);
-    List<Integer> availableMoves = new ArrayList<>();
+//    TODO - needed?
+//    BoardAnalyser boardAnalyser = new BoardAnalyser(config);
+//    List<Integer> availableMoves = new ArrayList<>();
 
-//    TODO May not be fully necessary
-//    try {
-//      currentState = currentState.chooseChildViaAction(findActionTakenByOpponent(...));
-//    }
+//    TODO - may not be fully necessary
+//    Board intState = null;
+//    StatePython newState = null;
 
-//    TODO DON'T FORGET CODE AFTER STATE CLASS - done?
+    try {
+//      TODO - needed?
+//      intState = new Board(intState, currentState.getActionTaken(), this.getCounter());
+      currentState = currentState.chooseChildViaAction(currentState.getActionTaken());
+      currentState.setParent(null);
+
+    } catch (Exception e) {
+      currentState = new StatePython(getCounter(),
+              board,
+              mark,
+              config,
+              null,
+              false,
+              null,
+              null);
+    }
+
     while (System.currentTimeMillis() - initTimeMilSecs <= T_max) {
       currentState.treeSingleRun();
     }
@@ -152,12 +171,12 @@ public class ConnectForkMCTSv0 extends Player {
 //    BoardAnalyser boardAnalyser = new BoardAnalyser(config);
 //    List<Integer> availableMoves = new ArrayList<>();
 
-//    TODO - May not be fully necessary?
+//    TODO - may not be fully necessary?
 //    try {
 //      currentState = currentState.chooseChildViaAction(findActionTakenByOpponent(...));
 //    }
 
-//    TODO DON'T FORGET CODE AFTER STATE CLASS - done?
+//    TODO DON'T FORGET CODE AFTER STATE CLASS - done? I think...
     for (int ep = 0; ep <= episodes; ep++) {
       currentState.treeSingleRun();
     }
@@ -166,11 +185,11 @@ public class ConnectForkMCTSv0 extends Player {
 
     Board newBoardSim = null;
     try {
-      newBoardSim = new Board(newBoardSim, currentState.getActionTaken(), this.getCounter());
+      newBoardSim = new Board(this.board, currentState.getActionTaken(), this.getCounter());
     } catch (InvalidMoveException e) {
       return newBoardSim;
-    };
-    return null;
+    }
+    return this.board;
   }
 }
 
