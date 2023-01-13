@@ -4,7 +4,7 @@ import com.thehutgroup.accelerator.connectn.player.*;
 import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.BoardAnalyser;
 import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.GameState;
 
-import javax.lang.model.type.NullType;
+import java.lang.reflect.Array;
 import java.util.*;
 
 import static java.util.Objects.isNull;
@@ -87,7 +87,7 @@ public class StatePython extends ConnectForkMCTSv0 {
         ArrayList<Integer> availableMoves = new ArrayList<>();
 
 //        Does board need to be copied like in the Python script?
-        this.board = board;
+        this.board = getBoard();
         this.mark = mark;
         this.config = config;
         this.children = new ArrayList<StatePython>();
@@ -102,25 +102,32 @@ public class StatePython extends ConnectForkMCTSv0 {
             } catch (InvalidMoveException e) {
             }
         }
-        this.availableMoves = availableMoves;
 
-        this.expandableMoves = (ArrayList<Integer>)availableMoves.clone();
+        this.availableMoves = getAvailableMoves();
+        this.expandableMoves = (ArrayList<Integer>)this.availableMoves;
         this.isTerminal = isTerminal;
         this.terminalScore = terminalScore;
         this.actionTaken = actionTaken;
     }
 
     public boolean isExpandable() {
-        return !this.isTerminal && this.expandableMoves.size() > 0;
+        try {
+            this.expandableMoves.size();
+        } catch (NullPointerException nullPointerException) {
+            return false;
+        }
+
+//        TODO can we just remove second condition?
+        return !this.isTerminal && Array.getLength(this.expandableMoves) > 0;
     }
 
     public void expandSimulateChild() {
         Random rand = new Random();
-        int randIndex = rand.nextInt(this.expandableMoves.size() - 1);
-        int column = this.expandableMoves.get(randIndex);
+        int randIndex = rand.nextInt(0, this.expandableMoves.size());
+        int column = (int) Array.get(this.expandableMoves, randIndex);
 
 //     TODO  board as copy again?
-        Board childBoard = this.board;
+        Board childBoard = getBoard();
 
 //      TODO  might get us stuck...
 
@@ -128,7 +135,7 @@ public class StatePython extends ConnectForkMCTSv0 {
         double[] finishScore = checkFinishAndScore(childBoard, column, this.mark, this.getConfig());
 
         StatePython currentState = new StatePython(getCounter(),
-                board,
+                getBoard(),
                 mark,
                 config,
                 parent,
@@ -137,7 +144,7 @@ public class StatePython extends ConnectForkMCTSv0 {
                 actionTaken);
 
         StatePython newState1 = new StatePython(getCounter(),
-                board,
+                getBoard(),
                 mark,
                 config,
                 currentState,
@@ -162,11 +169,28 @@ public class StatePython extends ConnectForkMCTSv0 {
     }
 
     public StatePython chooseStrongestChild(double Cp) {
-//        ArrayList<Double> childrenScores = uctScore(...) - ADD LATER
-//        double maxScore = Collections.max(childrenScores);
-//        int bestChildIndex = childrenScores.indexOf(maxScore);
-//        return this.children.get(bestChildIndex);
-        return this.children.get(0);
+        ArrayList<Double> childrenScores = new ArrayList<>();
+        Double score = null;
+
+        for (StatePython child : this.children) {
+            score = uctScore(child.nodeTotalScore,
+                    child.nodeTotalVisits,
+                    this.nodeTotalVisits,
+                    Cp);
+            childrenScores.add(score);
+        }
+        if (!isNull(score)) {
+            double maxScore = Collections.max(childrenScores);
+            int bestChildIndex = childrenScores.indexOf(maxScore);
+            return this.children.get(bestChildIndex);
+        }
+
+//       TODO - will this force the MC to go back up a level and try again?
+//            - or are we stuck in a loop somewhere else?
+
+        else {
+            return this;
+        }
     }
 
     public StatePython choosePlayChild() {

@@ -122,7 +122,7 @@ public class ConnectForkMCTSv0 extends Player {
 //      currentState = currentState.chooseChildViaAction(findActionTakenByOpponent(...));
 //    }
 
-//    TODO DON'T FORGET CODE AFTER STATE CLASS
+//    TODO DON'T FORGET CODE AFTER STATE CLASS - done?
     while (System.currentTimeMillis() - initTimeMilSecs <= T_max) {
       currentState.treeSingleRun();
     }
