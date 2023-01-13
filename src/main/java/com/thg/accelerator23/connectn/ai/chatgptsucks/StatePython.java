@@ -125,20 +125,22 @@ public class StatePython extends ConnectForkMCTSv0 {
         int randIndex = rand.nextInt(0, this.expandableMoves.size());
         int column = (int) Array.get(this.expandableMoves, randIndex);
 
-//     TODO  board as copy again?
+//     TODO  board as copy again? - OK?
         Board childBoard = getBoard();
 
-//      TODO  might get us stuck...
-        int moveSim = makeMoveInSim(childBoard, mark);
-        availableMoves.add(moveSim);
-        int moveSimValid = availableMoves.get(new Random().nextInt(availableMoves.size()));
+//      TODO might get us stuck - OK?
+        Board childBoardSim = makeMoveInSim(childBoard, mark, 10);
 
-        Board childBoardSim = null;
-        try {
-            childBoardSim = new Board(childBoard, moveSimValid, this.getCounter());
-        } catch (InvalidMoveException e) {
-            return;
-        }
+//        TODO - now covered by returning board above?
+//        availableMoves.add(moveSim);
+//        int moveSimValid = availableMoves.get(new Random().nextInt(availableMoves.size()));
+//
+//        Board childBoardSim = null;
+//        try {
+//            childBoardSim = new Board(childBoard, moveSimValid, this.getCounter());
+//        } catch (InvalidMoveException e) {
+//            return;
+//        }
 
         double[] finishScore = checkFinishAndScore(childBoardSim, column, this.mark, this.getConfig());
 
@@ -177,10 +179,10 @@ public class StatePython extends ConnectForkMCTSv0 {
         ArrayList<Double> childrenScores = new ArrayList<>();
         Double score = null;
 
-        for (StatePython child : this.children) {
-            score = uctScore(child.nodeTotalScore,
-                    child.nodeTotalVisits,
-                    this.nodeTotalVisits,
+        for (StatePython child : this.getChildren()) {
+            score = uctScore(child.getNodeTotalScore(),
+                    child.getNodeTotalVisits(),
+                    this.getNodeTotalVisits(),
                     Cp);
             childrenScores.add(score);
         }
@@ -194,7 +196,7 @@ public class StatePython extends ConnectForkMCTSv0 {
 //            - or are we stuck in a loop somewhere else?
 
         else {
-            return this;
+            return null;
         }
     }
 

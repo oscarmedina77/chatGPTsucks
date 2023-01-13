@@ -41,7 +41,7 @@ public class ConnectForkMCTSv0 extends Player {
     if (nodeTotalVisits == 0) {
       return Double.POSITIVE_INFINITY;
     }
-    return nodeTotalScore / nodeTotalVisits + Cp + Math.sqrt(2*Math.log(parentTotalVisits / nodeTotalVisits));
+    return nodeTotalScore / nodeTotalVisits + Cp * Math.sqrt(2*Math.log(parentTotalVisits) / nodeTotalVisits);
   }
 
   public int opponentMark(int mark) {
@@ -69,17 +69,18 @@ public class ConnectForkMCTSv0 extends Player {
   public double defaultPolicySimulation(Board board, int mark, GameConfig config, GameState gameState, Counter winner) {
     double originalMark = mark;
     int column = randomAction(board, config);
+    int episodes = 10;
 
     double[] finishScore = checkFinishAndScore(board, column, mark, config);
 
 //   TODO this may get stuck, make new function?
-    makeMoveInSim(board, mark);
+    makeMoveInSim(board, mark, episodes);
     System.out.println("are we stuck lmao");
 
     while (!gameState.isEnd()) {
       mark = opponentMark(mark);
       column = randomAction(board, config);
-      makeMoveInSim(board, mark);
+      makeMoveInSim(board, mark, episodes);
       finishScore = checkFinishAndScore(board, column, mark, config);
     }
 
@@ -127,14 +128,15 @@ public class ConnectForkMCTSv0 extends Player {
       currentState.treeSingleRun();
     }
 
+    currentState = currentState.choosePlayChild();
     return currentState.getActionTaken();
   }
 
-  public int makeMoveInSim(Board board, int mark) {
+  public Board makeMoveInSim(Board board, int mark, int episodes) {
 
-    double initTimeMilSecsSim = System.currentTimeMillis();
+//    double initTimeMilSecsSim = System.currentTimeMillis();
 //    double EMPTY = 0;
-    double T_max = 10;
+//    double T_max = 10;
     GameConfig config = board.getConfig();
 
     StatePython currentState = new StatePython(getCounter(),
@@ -146,8 +148,8 @@ public class ConnectForkMCTSv0 extends Player {
             null,
             null);
 
-    BoardAnalyser boardAnalyser = new BoardAnalyser(config);
-    List<Integer> availableMoves = new ArrayList<>();
+//    BoardAnalyser boardAnalyser = new BoardAnalyser(config);
+//    List<Integer> availableMoves = new ArrayList<>();
 
 //    TODO - May not be fully necessary?
 //    try {
@@ -155,11 +157,19 @@ public class ConnectForkMCTSv0 extends Player {
 //    }
 
 //    TODO DON'T FORGET CODE AFTER STATE CLASS - done?
-    while (System.currentTimeMillis() - initTimeMilSecsSim <= T_max) {
+    for (int ep = 0; ep <= episodes; ep++) {
       currentState.treeSingleRun();
     }
 
-    return currentState.getActionTaken();
+    currentState = currentState.choosePlayChild();
+
+    Board newBoardSim = null;
+    try {
+      newBoardSim = new Board(newBoardSim, currentState.getActionTaken(), this.getCounter());
+    } catch (InvalidMoveException e) {
+      return newBoardSim;
+    };
+    return null;
   }
 }
 
