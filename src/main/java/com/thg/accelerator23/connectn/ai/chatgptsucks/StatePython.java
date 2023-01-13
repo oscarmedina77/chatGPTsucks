@@ -205,17 +205,22 @@ public class StatePython extends ConnectForkMCTSv0 {
         return this.children.get(bestChildIndex);
     }
 
-    public Object treeSingleRun() {
+    public void treeSingleRun() {
         if (this.isTerminal) {
             this.backPropagate(this.terminalScore);
-            return null;
+            System.out.println("stuck Terminal");
+            return;
         }
         if (this.isExpandable()) {
             this.expandSimulateChild();
-            return null;
+            System.out.println("stuck Expandable");
+            return;
         }
+        System.out.println("stuck at end");
+        System.out.println("isTerminal = " + isTerminal);
+        System.out.println("isExpandable = " + isExpandable());
         this.chooseStrongestChild(Cp_default).treeSingleRun();
-        return null;
+        return;
     }
 
     public double simulate() {
