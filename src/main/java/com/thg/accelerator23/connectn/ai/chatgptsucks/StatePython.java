@@ -12,7 +12,7 @@ import java.util.Random;
 
 import static java.util.Objects.isNull;
 
-public class StatePython extends ConnectForkMCTSv0 {
+public class StatePython extends ConnectForkMCTSv1 {
     private Board board;
     private int mark;
     private GameConfig config;
@@ -143,7 +143,8 @@ public class StatePython extends ConnectForkMCTSv0 {
 
 //      TODO might get us stuck - OK?
         System.out.println("exMoves size =  " + this.expandableMoves.size());
-        Board childBoardSim = makeMoveInSim(childBoard, mark);
+//        Board childBoardSim = makeMoveInSim(childBoard, mark);
+        Board childBoardSim = makeMoveAltRandom(board);
 
 //        TODO - now covered by returning board above?
 //        availableMoves.add(moveSim);
