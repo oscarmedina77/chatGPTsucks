@@ -1,7 +1,6 @@
 package com.thg.accelerator23.connectn.ai.chatgptsucks;
 
 import com.thehutgroup.accelerator.connectn.player.*;
-import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.BoardAnalyser;
 import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.GameState;
 
 import java.util.ArrayList;
@@ -136,16 +135,17 @@ public class ConnectForkMCTSv1 extends Player {
     }
   }
   public Board makeMoveAltRandom(Board board) {
-    BoardAnalyser boardAnalyser = new BoardAnalyser(board.getConfig());
+//    BoardAnalyser boardAnalyser = new BoardAnalyser(board.getConfig());
     List<Integer> availableMoves =  new ArrayList<>();
 
-    if (boardAnalyser.winningPositionAvailable(this.getCounter(), board)) {
-      return addMoveToBoard(board, boardAnalyser.winningPosition(this.getCounter(), board));
-
-    } else if (boardAnalyser.winningPositionAvailable(this.getCounter().getOther(), board)) {
-      return addMoveToBoard(board, boardAnalyser.winningPosition(this.getCounter().getOther(), board));
-
-    } else {
+//    TODO - not sure if having "intelligent" random helps here?
+//    if (boardAnalyser.winningPositionAvailable(this.getCounter(), board)) {
+//      return addMoveToBoard(board, boardAnalyser.winningPosition(this.getCounter(), board));
+//
+//    } else if (boardAnalyser.winningPositionAvailable(this.getCounter().getOther(), board)) {
+//      return addMoveToBoard(board, boardAnalyser.winningPosition(this.getCounter().getOther(), board));
+//
+//    } else {
       for (int i = 0; i < board.getConfig().getWidth(); i++){
         try {
           new Board(board, i, this.getCounter());
@@ -156,7 +156,7 @@ public class ConnectForkMCTSv1 extends Player {
       return addMoveToBoard(board, availableMoves.get(new Random().nextInt(availableMoves.size())));
     }
   }
-}
+
 
 
 

@@ -4,32 +4,36 @@ import com.thehutgroup.accelerator.connectn.player.Board;
 import com.thehutgroup.accelerator.connectn.player.Counter;
 import com.thehutgroup.accelerator.connectn.player.GameConfig;
 import com.thehutgroup.accelerator.connectn.player.InvalidMoveException;
-import com.thg.accelerator23.connectn.ai.chatgptsucks.analysis.GameState;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Random;
 
+import static java.util.Collections.max;
 import static java.util.Objects.isNull;
 
 public class StatePython extends ConnectForkMCTSv1 {
-    private Board board;
-    private int mark;
-    private GameConfig config;
+    public Board board;
+    public int mark;
+    public GameConfig config;
     public ArrayList<StatePython> children;
 
     public void setParent(StatePython parent) {
         this.parent = parent;
     }
-
+    public void setChildren(ArrayList<StatePython> children) {
+        this.children = children;
+    }
+    public void setNodeTotalScore(Double nodeTotalScore) { this.nodeTotalScore = nodeTotalScore;}
+    public void setNodeTotalVisits(int nodeTotalVisits) {this.nodeTotalVisits = nodeTotalVisits;}
+    public void setExpandableMoves(ArrayList<Integer> moves) {this.expandableMoves = moves;}
     public StatePython parent;
-    public double nodeTotalScore;
+    public Double nodeTotalScore;
     public int nodeTotalVisits;
-    private final ArrayList<Integer> availableMoves;
-    public final ArrayList<Integer> expandableMoves;
-    private final boolean isTerminal;
-    private final Double terminalScore;
-    private final Integer actionTaken;
+    public ArrayList<Integer> availableMoves;
+    public ArrayList<Integer> expandableMoves;
+    public boolean isTerminal;
+    public Double terminalScore;
+    public Integer actionTaken;
 
     public StatePython(Counter counter,
                        Board board,
@@ -49,7 +53,7 @@ public class StatePython extends ConnectForkMCTSv1 {
         this.config = config;
         this.children = new ArrayList<>();
         this.parent = parent;
-        this.nodeTotalScore = 0;
+        this.nodeTotalScore = 0.0;
         this.nodeTotalVisits = 0;
 
         for (int i = 0; i < board.getConfig().getWidth(); i++) {
@@ -60,54 +64,55 @@ public class StatePython extends ConnectForkMCTSv1 {
             }
         }
         this.availableMoves = availableMoves;
-        this.expandableMoves = availableMoves;
+        this.expandableMoves = new ArrayList<>();
+        this.expandableMoves.addAll(availableMoves);
         this.isTerminal = isTerminal;
         this.terminalScore = terminalScore;
         this.actionTaken = actionTaken;
     }
 
     public Board getBoard() {
-        return this.board;
+        return board;
     }
 
     public int getMark() {
-        return this.mark;
+        return mark;
     }
 
     public GameConfig getConfig() {
-        return this.config;
+        return config;
     }
 
     public ArrayList<StatePython> getChildren() {
-        return this.children;
+        return children;
     }
 
     public StatePython getParent() {
-        return this.parent;
+        return parent;
     }
 
     public double getNodeTotalScore() {
-        return this.nodeTotalScore;
+        return nodeTotalScore;
     }
 
     public int getNodeTotalVisits() {
-        return this.nodeTotalVisits;
+        return nodeTotalVisits;
     }
 
     public ArrayList<Integer> getExpandableMoves() {
-        return this.expandableMoves;
+        return expandableMoves;
     }
 
     public Boolean getIsTerminal() {
-        return this.isTerminal;
+        return isTerminal;
     }
 
     public Double getTerminalScore() {
-        return this.terminalScore;
+        return terminalScore;
     }
 
     public Integer getActionTaken() {
-        return this.actionTaken;
+        return actionTaken;
     }
 
     public boolean isExpandable() {
@@ -150,17 +155,27 @@ public class StatePython extends ConnectForkMCTSv1 {
                 this.getTerminalScore(),
                 this.getActionTaken());
 
+        currentState.setChildren(this.getChildren());
+        currentState.setNodeTotalScore(this.getNodeTotalScore());
+        currentState.setNodeTotalVisits(this.getNodeTotalVisits());
+
         StatePython newChild = new StatePython(this.getCounter(),
                 childBoard,
-                opponentMark(this.getMark()),
+                this.opponentMark(this.getMark()),
                 this.getConfig(),
                 currentState,
                 finishBool,
                 finishScore[1],
                 column);
 
+        ArrayList<StatePython> oldChildren = currentState.getChildren();
         ArrayList<StatePython> newChildren = newChild.getChildren();
-        this.children.addAll(newChildren);
+        ArrayList<StatePython> concatChildren = new ArrayList<>();
+
+        concatChildren.addAll(oldChildren);
+        concatChildren.addAll(newChildren);
+
+        this.setChildren(concatChildren);
 
         try {
             simScore = this.getChildren().get(this.getChildren().size() - 1).simulate();
@@ -168,24 +183,26 @@ public class StatePython extends ConnectForkMCTSv1 {
         catch (Exception e) {
             return;
         }
+        this.getChildren().get(this.getChildren().size() - 1).backPropagate(simScore);
 
-        this.children.get(this.getChildren().size() - 1).backPropagate(simScore);
-        this.expandableMoves.remove(column);
+        ArrayList<Integer> newMoves = this.getExpandableMoves();
+        newMoves.remove(column);
+        this.setExpandableMoves(newMoves);
     }
 
     public StatePython chooseStrongestChild(double Cp) {
         ArrayList<Double> childrenScores = new ArrayList<>();
-        Double score = 0.0;
+        Double score = Double.POSITIVE_INFINITY;
 
         for (StatePython child : this.getChildren()) {
-            score = uctScore(child.getNodeTotalScore(),
+            score = this.uctScore(child.getNodeTotalScore(),
                     child.getNodeTotalVisits(),
                     this.getNodeTotalVisits(),
                     Cp);
             childrenScores.add(score);
         }
-        if (score != 0.0) {
-            double maxScore = Collections.max(childrenScores);
+        if (score != Double.POSITIVE_INFINITY) {
+            double maxScore = max(childrenScores);
             int bestChildIndex = childrenScores.indexOf(maxScore);
 //            getChildren() ?
             return this.getChildren().get(bestChildIndex);
@@ -208,12 +225,14 @@ public class StatePython extends ConnectForkMCTSv1 {
             childrenScores.add(ntScore);
         }
 
-        if (ntScore != 0) {
-            double maxScore = Collections.max(childrenScores);
+        if (ntScore != 0.0) {
+            double maxScore = max(childrenScores);
             int bestChildIndex = childrenScores.indexOf(maxScore);
             return this.getChildren().get(bestChildIndex);
         }
         else {
+//            TODO - should we get here now?
+            System.out.println("choosePlayChild skips to ELSE statement");
             try {
                 return this.getParent();
             }
@@ -240,14 +259,14 @@ public class StatePython extends ConnectForkMCTSv1 {
         if (this.getIsTerminal()) {
             return this.getTerminalScore();
         }
-        return opponentScore(this.defaultPolicySimulation(this.getBoard(), this.getMark()));
+        return this.opponentScore(this.defaultPolicySimulation(this.getBoard(), this.getMark()));
     }
 
     public void backPropagate(double simulationScore) {
-        this.nodeTotalScore += simulationScore;
-        this.nodeTotalVisits += 1;
+        this.setNodeTotalScore(this.getNodeTotalScore() + simulationScore);
+        this.setNodeTotalVisits((this.getNodeTotalVisits() + 1));
         if (!isNull(this.getActionTaken())) {
-            this.parent.backPropagate(opponentScore(simulationScore));
+            this.parent.backPropagate(this.opponentScore(simulationScore));
         }
     }
 
