@@ -42,10 +42,8 @@ public class StatePython extends ConnectForkMCTSv1 {
         {
         super(counter);
 
-//        BoardAnalyser boardAnalyser = new BoardAnalyser(config);
         ArrayList<Integer> availableMoves = new ArrayList<>();
 
-//        Does board need to be copied like in the Python script?
         this.board = board;
         this.mark = mark;
         this.config = config;
@@ -62,7 +60,6 @@ public class StatePython extends ConnectForkMCTSv1 {
             }
         }
         this.availableMoves = availableMoves;
-//        this.availableMoves = getAvailableMoves();
         this.expandableMoves = availableMoves;
         this.isTerminal = isTerminal;
         this.terminalScore = terminalScore;
@@ -97,26 +94,19 @@ public class StatePython extends ConnectForkMCTSv1 {
         return this.nodeTotalVisits;
     }
 
-//    public ArrayList<Integer> getAvailableMoves() {
-//        return availableMoves;
-//    }
-
     public ArrayList<Integer> getExpandableMoves() {
         return this.expandableMoves;
     }
 
     public Boolean getIsTerminal() {
-        System.out.println("getIsTerminal returns " + this.isTerminal);
         return this.isTerminal;
     }
 
     public Double getTerminalScore() {
-        System.out.println("getTerminalScore returns " + this.terminalScore);
         return this.terminalScore;
     }
 
     public Integer getActionTaken() {
-        System.out.println("getActionTaken returns " + this.actionTaken);
         return this.actionTaken;
     }
 
@@ -136,40 +126,22 @@ public class StatePython extends ConnectForkMCTSv1 {
         Random rand = new Random();
         int randIndex = rand.nextInt(0, this.getExpandableMoves().size());
         int column = this.getExpandableMoves().get(randIndex);
-        double simScore = 0.0;
+        double simScore;
 
-//     TODO  board as copy again? - OK?
         Board childBoard;
         try {
-//            childBoard = new Board(this.getParent().getBoard(), this.getActionTaken(), this.getCounter());
-            childBoard = this.getBoard();
+            childBoard = new Board(this.getBoard(), column, this.getCounter());
         } catch (Exception e) {
             System.out.println("expandSimulateChild found exception");
             return;
         }
 
-//      TODO might get us stuck - OK?
-        System.out.println("exMoves size =  " + this.getExpandableMoves().size());
-//        Board childBoardSim = makeMoveInSim(childBoard, mark);
-        Board childBoardSim = makeMoveAltRandom(this.getBoard());
-
-//        TODO - now covered by returning board above?
-//        availableMoves.add(moveSim);
-//        int moveSimValid = availableMoves.get(new Random().nextInt(availableMoves.size()));
-//
-//        Board childBoardSim = null;
-//        try {
-//            childBoardSim = new Board(childBoard, moveSimValid, this.getCounter());
-//        } catch (InvalidMoveException e) {
-//            return;
-//        }
-
-        double[] finishScore = checkFinishAndScore(childBoardSim, column, this.getMark(), this.getConfig());
+        double[] finishScore = this.checkFinishAndScore();
 
         boolean finishBool;
-        finishBool = finishScore[0] == 0;
+        finishBool = (finishScore[0] == 1);
 
-        StatePython currentState = new StatePython(getCounter(),
+        StatePython currentState = new StatePython(this.getCounter(),
                 this.getBoard(),
                 this.getMark(),
                 this.getConfig(),
@@ -178,14 +150,14 @@ public class StatePython extends ConnectForkMCTSv1 {
                 this.getTerminalScore(),
                 this.getActionTaken());
 
-        StatePython newChild = new StatePython(getCounter(),
+        StatePython newChild = new StatePython(this.getCounter(),
                 childBoard,
                 opponentMark(this.getMark()),
                 this.getConfig(),
                 currentState,
                 finishBool,
                 finishScore[1],
-                this.getActionTaken());
+                column);
 
         ArrayList<StatePython> newChildren = newChild.getChildren();
         this.children.addAll(newChildren);
@@ -219,10 +191,9 @@ public class StatePython extends ConnectForkMCTSv1 {
             return this.getChildren().get(bestChildIndex);
         }
 
-//       TODO - will this force the MC to go back up a level and try again?
-//            - or are we stuck in a loop somewhere else?
-
         else {
+//            TODO - successive fixes should now make else statement redundant?
+            System.out.println("chooseStrongestChild returns parent");
             return this.getParent();
         }
     }
@@ -240,7 +211,6 @@ public class StatePython extends ConnectForkMCTSv1 {
         if (ntScore != 0) {
             double maxScore = Collections.max(childrenScores);
             int bestChildIndex = childrenScores.indexOf(maxScore);
-//             getChildren() ?
             return this.getChildren().get(bestChildIndex);
         }
         else {
@@ -256,17 +226,13 @@ public class StatePython extends ConnectForkMCTSv1 {
     public void treeSingleRun() {
         if (this.getIsTerminal()) {
             this.backPropagate(this.getTerminalScore());
-//            System.out.println("stuck Terminal");
             return;
         }
         if (this.isExpandable()) {
             this.expandSimulateChild();
-//            System.out.println("stuck Expandable");
             return;
         }
-//        System.out.println("stuck at end");
-//        System.out.println("isTerminal = " + isTerminal());
-//        System.out.println("isExpandable = " + isExpandable());
+
         this.chooseStrongestChild(Cp_default).treeSingleRun();
     }
 
@@ -274,9 +240,7 @@ public class StatePython extends ConnectForkMCTSv1 {
         if (this.getIsTerminal()) {
             return this.getTerminalScore();
         }
-//        TODO - leave out?
-//        this.gameState = new GameState(winner);
-        return opponentScore(defaultPolicySimulation(this.getBoard(), this.getMark(), this.getConfig(), new GameState(this.getCounter())));
+        return opponentScore(this.defaultPolicySimulation(this.getBoard(), this.getMark()));
     }
 
     public void backPropagate(double simulationScore) {
@@ -293,7 +257,7 @@ public class StatePython extends ConnectForkMCTSv1 {
                 return child;
             }
         }
-//        TODO - return this.parent or null ?
+//        TODO - return this.parent or null?
         return this.getParent();
 //        return null;
     }

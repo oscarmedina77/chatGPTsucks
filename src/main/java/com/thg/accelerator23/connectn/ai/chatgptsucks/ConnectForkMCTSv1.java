@@ -9,21 +9,7 @@ import java.util.List;
 import java.util.Random;
 
 public class ConnectForkMCTSv1 extends Player {
-//  private Board board;
-//  private int mark = 1;
-//  private GameConfig config;
-  double Cp_default = 1.0;
-//  StatePython currentState = new StatePython(getCounter(),
-//                                              board,
-//                                              mark,
-//                                              config,
-//                                              null,
-//                                              false,
-//                                              null,
-//                                              null);
-
-//  TODO Observation???
-//  TODO global currentState?
+  public double Cp_default = 1.0;
 
   public ConnectForkMCTSv1(Counter counter) {
     //TODO: fill in your name here
@@ -40,10 +26,10 @@ public class ConnectForkMCTSv1 extends Player {
     return newBoard;
   }
 
-  public double[] checkFinishAndScore(Board board, int column, int mark, GameConfig config) {
-    Counter winner = getCounter();
+  public double[] checkFinishAndScore() {
+    Counter counter = this.getCounter();
+    GameState gameState = new GameState(counter);
 
-    GameState gameState = new GameState(winner);
     if (gameState.isWin()) {
       return new double[]{1, 1};
     }
@@ -69,41 +55,21 @@ public class ConnectForkMCTSv1 extends Player {
     return 1 - score;
   }
 
-  public int randomAction(Board board, GameConfig config) {
-//    BoardAnalyser boardAnalyser = new BoardAnalyser(board.getConfig());
-    List<Integer> availableMoves = new ArrayList<>();
-
-    for (int i = 0; i < board.getConfig().getWidth(); i++) {
-      try {
-        new Board(board, i, this.getCounter());
-        availableMoves.add(i);
-      } catch (InvalidMoveException e) {
-      }
-    }
-    System.out.println("****** randomAction returned random valid");
-    return availableMoves.get(new Random().nextInt(availableMoves.size()));
-  }
-
-  public double defaultPolicySimulation(Board board, int mark, GameConfig config, GameState gameState) {
+  public double defaultPolicySimulation(Board board, int mark) {
     double originalMark = mark;
-    int column = randomAction(board, config);
-//    int episodes = 1000;
 
-    double[] finishScore = checkFinishAndScore(board, column, mark, config);
-
-//   TODO this may get stuck, make new function?
-//    makeMoveInSim(board, mark);
-    makeMoveAltRandom(board);
+    double[] finishScore = this.checkFinishAndScore();
+    this.makeMoveAltRandom(board);
 
     int dfpsCounter = 0;
-    while (finishScore[0] != 0.0) {
+    while (finishScore[0] != 1.0) {
       dfpsCounter = dfpsCounter + 1;
-      mark = opponentMark(mark);
-      column = randomAction(board, config);
-       //    makeMoveInSim(board, mark);
-      makeMoveAltRandom(board);
-      finishScore = checkFinishAndScore(board, column, mark, config);
+      mark = this.opponentMark(mark);
+      this.makeMoveAltRandom(board);
+      finishScore = this.checkFinishAndScore();
     }
+
+//    TODO - WHY DOES THIS NEVER PRINT?
     System.out.println("dfpsCounter = " + dfpsCounter);
 
     if (mark == originalMark) {
@@ -122,7 +88,7 @@ public class ConnectForkMCTSv1 extends Player {
 
     int mark = 1;
 
-    StatePython currentState = new StatePython(getCounter(),
+    StatePython currentState = new StatePython(this.getCounter(),
             board,
             mark,
             config,
@@ -136,7 +102,7 @@ public class ConnectForkMCTSv1 extends Player {
       currentState.setParent(null);
 
     } catch (Exception e) {
-      currentState = new StatePython(getCounter(),
+      currentState = new StatePython(this.getCounter(),
               board,
               mark,
               config,
@@ -170,8 +136,6 @@ public class ConnectForkMCTSv1 extends Player {
     }
   }
   public Board makeMoveAltRandom(Board board) {
-//    TODO - below from Oscar ConectFork, I need to return a Board in all returns
-//          => use addMoveToBoard function
     BoardAnalyser boardAnalyser = new BoardAnalyser(board.getConfig());
     List<Integer> availableMoves =  new ArrayList<>();
 
@@ -191,32 +155,7 @@ public class ConnectForkMCTSv1 extends Player {
       }
       return addMoveToBoard(board, availableMoves.get(new Random().nextInt(availableMoves.size())));
     }
-}
-
-//  public Board makeMoveInSim(Board board, int mark) {
-//    GameConfig config = board.getConfig();
-//
-//    StatePython currentState = new StatePython(getCounter(),
-//            board,
-//            mark,
-//            config,
-//            null,
-//            false,
-//            null,
-//            null);
-//
-//    currentState.treeSingleRun();
-//
-//    currentState = currentState.choosePlayChild();
-//
-//    Board newBoardSim = null;
-//    try {
-//      newBoardSim = new Board(this.board, currentState.getActionTaken(), this.getCounter());
-//    } catch (InvalidMoveException e) {
-//      return newBoardSim;
-//    }
-//    return this.board;
-//  }
+  }
 }
 
 
