@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Random;
 
 public class ConnectForkMCTSv1 extends Player {
-  private Board board;
-  private int mark = 1;
-  private GameConfig config;
+//  private Board board;
+//  private int mark = 1;
+//  private GameConfig config;
   double Cp_default = 1.0;
 //  StatePython currentState = new StatePython(getCounter(),
 //                                              board,
@@ -33,7 +33,7 @@ public class ConnectForkMCTSv1 extends Player {
   public Board addMoveToBoard(Board board, int move) {
     Board newBoard;
     try {
-      newBoard = new Board(this.board, move, this.getCounter());
+      newBoard = new Board(board, move, this.getCounter());
     } catch (InvalidMoveException e) {
       return null;
     }
@@ -94,7 +94,6 @@ public class ConnectForkMCTSv1 extends Player {
 //   TODO this may get stuck, make new function?
 //    makeMoveInSim(board, mark);
     makeMoveAltRandom(board);
-    System.out.println("are we stuck lmao");
 
     int dfpsCounter = 0;
     while (finishScore[0] != 0.0) {
@@ -133,7 +132,6 @@ public class ConnectForkMCTSv1 extends Player {
             null);
 
     try {
-      System.out.println("makeMove try failed :(");
       currentState = currentState.chooseChildViaAction(currentState.getActionTaken());
       currentState.setParent(null);
 
@@ -184,7 +182,7 @@ public class ConnectForkMCTSv1 extends Player {
       return addMoveToBoard(board, boardAnalyser.winningPosition(this.getCounter().getOther(), board));
 
     } else {
-      for (int i = 0; i< board.getConfig().getWidth(); i ++){
+      for (int i = 0; i < board.getConfig().getWidth(); i++){
         try {
           new Board(board, i, this.getCounter());
           availableMoves.add(i);
