@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Random;
 
 public class ConnectForkMCTSv1 extends Player {
-  public double Cp_default = 1.0;
+  public Double Cp_default = 1.0;
 
   public ConnectForkMCTSv1(Counter counter) {
     //TODO: fill in your name here
@@ -83,7 +83,7 @@ public class ConnectForkMCTSv1 extends Player {
   public int makeMove(Board board) {
 
     double initTimeMilSecs = System.currentTimeMillis();
-    double T_max = 900;
+    double T_max = 9000;
     GameConfig config = board.getConfig();
 
     int mark = 1;

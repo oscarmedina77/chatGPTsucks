@@ -43,7 +43,7 @@ public class StatePython extends ConnectForkMCTSv1 {
                        StatePython parent,
                        Boolean isTerminal,
                        Double terminalScore,
-                       int actionTaken)
+                       Integer actionTaken)
         {
         super(counter);
 
