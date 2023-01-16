@@ -16,6 +16,7 @@ public class StatePython extends ConnectForkMCTSv1 {
     public int mark;
     public GameConfig config;
     public ArrayList<StatePython> children;
+    public void setBoard(Board board) {this.board = board;}
 
     public void setParent(StatePython parent) {
         this.parent = parent;
@@ -42,7 +43,7 @@ public class StatePython extends ConnectForkMCTSv1 {
                        StatePython parent,
                        Boolean isTerminal,
                        Double terminalScore,
-                       Integer actionTaken)
+                       int actionTaken)
         {
         super(counter);
 
@@ -111,58 +112,45 @@ public class StatePython extends ConnectForkMCTSv1 {
         return terminalScore;
     }
 
-    public Integer getActionTaken() {
+    public int getActionTaken() {
         return actionTaken;
     }
 
-    public boolean isExpandable() {
+    public boolean isExpandable(StatePython currentState) {
         try {
-            this.getExpandableMoves().size();
+            currentState.getExpandableMoves().size();
         } catch (NullPointerException nullPointerException) {
             System.out.println("isExpandable found exception");
             return false;
         }
 
 //        TODO can we just remove second condition?
-        return !this.getIsTerminal() && this.getExpandableMoves().size() > 0;
+        return !currentState.getIsTerminal() && currentState.getExpandableMoves().size() > 0;
     }
 
-    public void expandSimulateChild() {
+    public void expandSimulateChild(StatePython currentState) {
         Random rand = new Random();
-        int randIndex = rand.nextInt(0, this.getExpandableMoves().size());
-        int column = this.getExpandableMoves().get(randIndex);
+        int randIndex = rand.nextInt(0, currentState.getExpandableMoves().size());
+        int column = currentState.getExpandableMoves().get(randIndex);
         double simScore;
 
         Board childBoard;
         try {
-            childBoard = new Board(this.getBoard(), column, this.getCounter());
+            childBoard = new Board(currentState.getBoard(), column, currentState.getCounter());
         } catch (Exception e) {
             System.out.println("expandSimulateChild found exception");
             return;
         }
 
-        double[] finishScore = this.checkFinishAndScore();
+        double[] finishScore = checkFinishAndScore(currentState);
 
         boolean finishBool;
         finishBool = (finishScore[0] == 1);
 
-        StatePython currentState = new StatePython(this.getCounter(),
-                this.getBoard(),
-                this.getMark(),
-                this.getConfig(),
-                this.getParent(),
-                this.getIsTerminal(),
-                this.getTerminalScore(),
-                this.getActionTaken());
-
-        currentState.setChildren(this.getChildren());
-        currentState.setNodeTotalScore(this.getNodeTotalScore());
-        currentState.setNodeTotalVisits(this.getNodeTotalVisits());
-
-        StatePython newChild = new StatePython(this.getCounter(),
+        StatePython newChild = new StatePython(currentState.getCounter(),
                 childBoard,
-                this.opponentMark(this.getMark()),
-                this.getConfig(),
+                opponentMark(currentState.getMark()),
+                currentState.getConfig(),
                 currentState,
                 finishBool,
                 finishScore[1],
@@ -175,29 +163,30 @@ public class StatePython extends ConnectForkMCTSv1 {
         concatChildren.addAll(oldChildren);
         concatChildren.addAll(newChildren);
 
-        this.setChildren(concatChildren);
+        StatePython oldState = currentState;
+        currentState.setChildren(concatChildren);
 
         try {
-            simScore = this.getChildren().get(this.getChildren().size() - 1).simulate();
+            simScore = currentState.getChildren().get(currentState.getChildren().size() - 1).simulate(oldState);
         }
         catch (Exception e) {
             return;
         }
-        this.getChildren().get(this.getChildren().size() - 1).backPropagate(simScore);
+        this.getChildren().get(currentState.getChildren().size() - 1).backPropagate(simScore, currentState);
 
-        ArrayList<Integer> newMoves = this.getExpandableMoves();
+        ArrayList<Integer> newMoves = currentState.getExpandableMoves();
         newMoves.remove(column);
         this.setExpandableMoves(newMoves);
     }
 
-    public StatePython chooseStrongestChild(double Cp) {
+    public StatePython chooseStrongestChild(double Cp, StatePython currentState) {
         ArrayList<Double> childrenScores = new ArrayList<>();
         Double score = Double.POSITIVE_INFINITY;
 
-        for (StatePython child : this.getChildren()) {
-            score = this.uctScore(child.getNodeTotalScore(),
+        for (StatePython child : currentState.getChildren()) {
+            score = uctScore(child.getNodeTotalScore(),
                     child.getNodeTotalVisits(),
-                    this.getNodeTotalVisits(),
+                    currentState.getNodeTotalVisits(),
                     Cp);
             childrenScores.add(score);
         }
@@ -205,21 +194,21 @@ public class StatePython extends ConnectForkMCTSv1 {
             double maxScore = max(childrenScores);
             int bestChildIndex = childrenScores.indexOf(maxScore);
 //            getChildren() ?
-            return this.getChildren().get(bestChildIndex);
+            return currentState.getChildren().get(bestChildIndex);
         }
 
         else {
 //            TODO - successive fixes should now make else statement redundant?
             System.out.println("chooseStrongestChild returns parent");
-            return this.getParent();
+            return currentState.getParent();
         }
     }
 
-    public StatePython choosePlayChild() {
+    public StatePython choosePlayChild(StatePython currentState) {
         ArrayList<Double> childrenScores = new ArrayList<>();
         Double ntScore = 0.0;
 
-        for (StatePython child : this.getChildren()) {
+        for (StatePython child : currentState.getChildren()) {
             ntScore = child.getNodeTotalScore();
             System.out.println("child nodeTotalScore = " + ntScore);
             childrenScores.add(ntScore);
@@ -228,13 +217,13 @@ public class StatePython extends ConnectForkMCTSv1 {
         if (ntScore != 0.0) {
             double maxScore = max(childrenScores);
             int bestChildIndex = childrenScores.indexOf(maxScore);
-            return this.getChildren().get(bestChildIndex);
+            return currentState.getChildren().get(bestChildIndex);
         }
         else {
 //            TODO - should we get here now?
             System.out.println("choosePlayChild skips to ELSE statement");
             try {
-                return this.getParent();
+                return currentState.getParent();
             }
             catch (NullPointerException e) {
                 return null;
@@ -242,42 +231,42 @@ public class StatePython extends ConnectForkMCTSv1 {
         }
     }
 
-    public void treeSingleRun() {
-        if (this.getIsTerminal()) {
-            this.backPropagate(this.getTerminalScore());
+    public void treeSingleRun(StatePython currentState) {
+        if (currentState.getIsTerminal()) {
+            currentState.backPropagate(currentState.getTerminalScore(), currentState);
             return;
         }
-        if (this.isExpandable()) {
-            this.expandSimulateChild();
+        if (isExpandable(currentState)) {
+            expandSimulateChild(currentState);
             return;
         }
 
-        this.chooseStrongestChild(Cp_default).treeSingleRun();
+        this.chooseStrongestChild(Cp_default, currentState).treeSingleRun(currentState);
     }
 
-    public double simulate() {
-        if (this.getIsTerminal()) {
-            return this.getTerminalScore();
+    public double simulate(StatePython currentState) {
+        if (currentState.getIsTerminal()) {
+            return currentState.getTerminalScore();
         }
-        return this.opponentScore(this.defaultPolicySimulation(this.getBoard(), this.getMark()));
+        return opponentScore(currentState.defaultPolicySimulation(currentState.getBoard(), currentState.getMark(), currentState));
     }
 
-    public void backPropagate(double simulationScore) {
-        this.setNodeTotalScore(this.getNodeTotalScore() + simulationScore);
-        this.setNodeTotalVisits((this.getNodeTotalVisits() + 1));
-        if (!isNull(this.getActionTaken())) {
-            this.parent.backPropagate(this.opponentScore(simulationScore));
+    public void backPropagate(double simulationScore, StatePython currentState) {
+        currentState.setNodeTotalScore(currentState.getNodeTotalScore() + simulationScore);
+        currentState.setNodeTotalVisits((currentState.getNodeTotalVisits() + 1));
+        if (!isNull(currentState.getActionTaken())) {
+            currentState.parent.backPropagate(currentState.opponentScore(simulationScore), currentState);
         }
     }
 
-    public StatePython chooseChildViaAction(int action) {
-        for (StatePython child : this.getChildren()) {
+    public StatePython chooseChildViaAction(int action, StatePython currentState) {
+        for (StatePython child : currentState.getChildren()) {
             if (child.getActionTaken() == action) {
                 return child;
             }
         }
 //        TODO - return this.parent or null?
-        return this.getParent();
+        return currentState.getParent();
 //        return null;
     }
 }

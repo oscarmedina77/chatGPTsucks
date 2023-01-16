@@ -15,18 +15,18 @@ public class ConnectForkMCTSv1 extends Player {
     super(counter, ConnectForkMCTSv1.class.getName());
   }
 
-  public Board addMoveToBoard(Board board, int move) {
+  public Board addMoveToBoard(Board board, int move, StatePython currentState) {
     Board newBoard;
     try {
-      newBoard = new Board(board, move, this.getCounter());
+      newBoard = new Board(board, move, currentState.getCounter());
     } catch (InvalidMoveException e) {
       return null;
     }
     return newBoard;
   }
 
-  public double[] checkFinishAndScore() {
-    Counter counter = this.getCounter();
+  public double[] checkFinishAndScore(StatePython currentState) {
+    Counter counter = currentState.getCounter();
     GameState gameState = new GameState(counter);
 
     if (gameState.isWin()) {
@@ -54,18 +54,19 @@ public class ConnectForkMCTSv1 extends Player {
     return 1 - score;
   }
 
-  public double defaultPolicySimulation(Board board, int mark) {
+  public double defaultPolicySimulation(Board board, int mark, StatePython currentState) {
     double originalMark = mark;
 
-    double[] finishScore = this.checkFinishAndScore();
-    this.makeMoveAltRandom(board);
+    double[] finishScore = checkFinishAndScore(currentState);
+
+    currentState.setBoard(makeMoveAltRandom(board, currentState));
 
     int dfpsCounter = 0;
     while (finishScore[0] != 1.0) {
       dfpsCounter = dfpsCounter + 1;
-      mark = this.opponentMark(mark);
-      this.makeMoveAltRandom(board);
-      finishScore = this.checkFinishAndScore();
+      mark = opponentMark(mark);
+      currentState.makeMoveAltRandom(board, currentState);
+      finishScore = checkFinishAndScore(currentState);
     }
 
 //    TODO - WHY DOES THIS NEVER PRINT?
@@ -97,7 +98,8 @@ public class ConnectForkMCTSv1 extends Player {
             null);
 
     try {
-      currentState = currentState.chooseChildViaAction(currentState.getActionTaken());
+      System.out.println("makeMove first try actionTaken = " + currentState.getActionTaken());
+      currentState.chooseChildViaAction(currentState.getActionTaken(), currentState);
       currentState.setParent(null);
 
     } catch (Exception e) {
@@ -109,17 +111,18 @@ public class ConnectForkMCTSv1 extends Player {
               false,
               null,
               null);
+      System.out.println("makeMove first try failed");
     }
 
     int makeMoveCounter = 0;
     while (System.currentTimeMillis() - initTimeMilSecs <= T_max) {
-      currentState.treeSingleRun();
+      currentState.treeSingleRun(currentState);
       makeMoveCounter = makeMoveCounter + 1;
     }
     System.out.println("makeMoveCounter = " + makeMoveCounter);
 
     try {
-      currentState = currentState.choosePlayChild();
+      currentState.choosePlayChild(currentState);
       return currentState.getActionTaken();
     } catch (NullPointerException npE) {
       List<Integer> availableMoves = new ArrayList<>();
@@ -134,7 +137,7 @@ public class ConnectForkMCTSv1 extends Player {
       return availableMoves.get(new Random().nextInt(availableMoves.size()));
     }
   }
-  public Board makeMoveAltRandom(Board board) {
+  public Board makeMoveAltRandom(Board board, StatePython currentState) {
 //    BoardAnalyser boardAnalyser = new BoardAnalyser(board.getConfig());
     List<Integer> availableMoves =  new ArrayList<>();
 
@@ -148,12 +151,12 @@ public class ConnectForkMCTSv1 extends Player {
 //    } else {
       for (int i = 0; i < board.getConfig().getWidth(); i++){
         try {
-          new Board(board, i, this.getCounter());
+          new Board(board, i, currentState.getCounter());
           availableMoves.add(i);
         } catch (InvalidMoveException e) {
         }
       }
-      return addMoveToBoard(board, availableMoves.get(new Random().nextInt(availableMoves.size())));
+      return addMoveToBoard(board, availableMoves.get(new Random().nextInt(availableMoves.size())), currentState);
     }
   }
 
